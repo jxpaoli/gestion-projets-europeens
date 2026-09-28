@@ -22,6 +22,11 @@
 # dans sa messagerie à partir de l'objet). La base refuse une source mail sans date, expéditeur ou objet.
 #   Commenter-Action -Id <uuid> -Message "Relance faite (mail du 25/09)"
 #   Fin-Passage -Id $p.id -MailsLus 42 -Creees 3 -Faites 2 -Rouvertes 0 -Commentaires 1
+#   Get-Evolutions -Projet EASY2LOG
+#   $e = Nouvelle-Evolution -Projet EASY2LOG -Date 2026-06-12 -Type retard -Element D1.3.1 -Titre "Rapport de cartographie repoussé" `
+#                           -Avant "P3" -Apres "P4" -Motif "…" -Statut valide_cdp
+#   Maj-Evolution -Id $e.id -Statut approuve        (jamais sur une entrée de Joseph ; jamais « abandonne »)
+#   Ajouter-SourceDocument -Cible evolution -Id $e.id -Document "PV_CdP3.pdf"     (document indexé du projet)
 #   Get-FichesProjet -Projet EASY2LOG
 #   Deposer-FicheProjet -Projet EASY2LOG -Version 4.0 -Pdf "IF Marittimo00156_V4.0_EASY2LOG.pdf" -Json C:\...iche.json `
 #                       -DateExport 2025-11-30 -Langue it -Partenaire "PP8 CCI de Corse (repris par l'EPCI de Corse)"
@@ -93,12 +98,14 @@ function Existe-Mail([string]$MailRef) {
   [bool](Api GET "actions?select=id&mail_ref=eq.$([uri]::EscapeDataString($MailRef))")
 }
 
+$script:ChampsCible = @{ action = 'action_id'; reunion = 'echeance_id'; point = 'point_id'; info = 'info_id'; evolution = 'evolution_id' }
+
 # Source « mail » d'un élément (action, réunion, point, info). Un mail déjà cité sur le même élément est ignoré.
 function Ajouter-Source {
-  param([Parameter(Mandatory)][ValidateSet('action', 'reunion', 'point', 'info')][string]$Cible, [Parameter(Mandatory)][string]$Id,
+  param([Parameter(Mandatory)][ValidateSet('action', 'reunion', 'point', 'info', 'evolution')][string]$Cible, [Parameter(Mandatory)][string]$Id,
         [Parameter(Mandatory)][string]$DateSource, [Parameter(Mandatory)][string]$Expediteur, [Parameter(Mandatory)][string]$Objet,
         [string]$MailRef, [int]$Numero)
-  $champ = @{ action = 'action_id'; reunion = 'echeance_id'; point = 'point_id'; info = 'info_id' }[$Cible]
+  $champ = $script:ChampsCible[$Cible]
   $corps = @{ $champ = $Id; type = 'mail'; date_source = $DateSource.Substring(0, 10); expediteur = $Expediteur; objet = $Objet }
   if ($MailRef) { $corps.mail_ref = $MailRef }
   if ($Numero) { $corps.numero = $Numero }
@@ -215,4 +222,47 @@ function Deposer-FicheProjet {
     $corps = ($champs | ConvertTo-Json -Compress).TrimEnd('}') + ',"version":' + $v + ',"contenu":' + $contenu + '}'
     (Api POST "fiches_projet" $corps)[0] | Select-Object id, version, updated_at
   }
+}
+
+# Journal des évolutions : écarts avec le formulaire (retard, calendrier, budget, activité, livrable, partenariat, décision).
+function Get-Evolutions([Parameter(Mandatory)][string]$Projet) {
+  Api GET "evolutions?select=id,date_evolution,type,element,titre,avant,apres,statut,modifie_par_admin&projet_id=eq.$(Id-Projet $Projet)&order=date_evolution"
+}
+
+function Nouvelle-Evolution {
+  param([Parameter(Mandatory)][string]$Projet, [Parameter(Mandatory)][string]$Date,
+        [Parameter(Mandatory)][ValidateSet('retard', 'calendrier', 'budget', 'activite', 'livrable', 'partenariat', 'decision', 'autre')][string]$Type,
+        [Parameter(Mandatory)][string]$Titre, [string]$Element, [string]$Avant, [string]$Apres, [string]$Motif,
+        [ValidateSet('constate', 'propose', 'valide_cdp', 'approuve', 'integre')][string]$Statut = 'constate', [decimal]$VersionIntegree)
+  $projetId = Id-Projet $Projet
+  # Pas de doublon : même projet, même date, même titre.
+  $deja = Api GET "evolutions?select=id&projet_id=eq.$projetId&date_evolution=eq.$Date&titre=eq.$([uri]::EscapeDataString($Titre))"
+  if ($deja) { Write-Host "Déjà notée : $Titre ($Date)"; return $deja[0] }
+  $corps = @{ projet_id = $projetId; date_evolution = $Date; type = $Type; titre = $Titre; statut = $Statut }
+  foreach ($k in 'Element', 'Avant', 'Apres', 'Motif') { $v = Get-Variable $k -ValueOnly; if ($v) { $corps[$k.ToLower()] = $v } }
+  if ($VersionIntegree) { $corps.version_integree = $VersionIntegree }
+  (Api POST "evolutions" $corps)[0]
+}
+
+function Maj-Evolution {
+  param([Parameter(Mandatory)][string]$Id, [ValidateSet('constate', 'propose', 'valide_cdp', 'approuve', 'integre')][string]$Statut,
+        [string]$Apres, [string]$Motif, [decimal]$VersionIntegree)
+  $corps = @{}
+  if ($Statut) { $corps.statut = $Statut }
+  if ($Apres) { $corps.apres = $Apres }
+  if ($Motif) { $corps.motif = $Motif }
+  if ($VersionIntegree) { $corps.version_integree = $VersionIntegree }
+  (Api PATCH "evolutions?id=eq.$Id" $corps)[0]
+}
+
+# Source « document » (PV, demande de modification, annexe…) : document indexé du projet, retrouvé par son nom exact.
+function Ajouter-SourceDocument {
+  param([Parameter(Mandatory)][ValidateSet('action', 'reunion', 'point', 'info', 'evolution')][string]$Cible,
+        [Parameter(Mandatory)][string]$Id, [Parameter(Mandatory)][string]$Document)
+  $doc = Api GET "documents?select=id,nom&present=eq.true&nom=eq.$([uri]::EscapeDataString($Document))"
+  if (-not $doc) { throw "Document introuvable dans l'index : $Document" }
+  $champ = $script:ChampsCible[$Cible]
+  $existe = Api GET "sources?select=id&$champ=eq.$Id&document_id=eq.$($doc[0].id)"
+  if ($existe) { Write-Host "Document déjà cité sur cet élément : ignoré."; return }
+  (Api POST "sources" @{ $champ = $Id; type = 'document'; document_id = $doc[0].id; objet = $doc[0].nom })[0]
 }

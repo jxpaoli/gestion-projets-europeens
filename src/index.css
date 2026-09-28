@@ -206,6 +206,31 @@ table.periodes th { color: var(--muted); font-weight: 700; }
 .fp-livrables { margin-top: 6px; }
 .fp-budget { display: grid; grid-template-columns: 1fr; gap: 12px; }
 @media (min-width: 720px) { .fp-budget { grid-template-columns: 1fr 1fr; } }
+.evo-badge { border: 0; background: var(--orange-fond); color: var(--orange); border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 800; display: inline-flex; gap: 6px; vertical-align: 1px; cursor: pointer; }
+.evo-retard { color: var(--rouge); }
+.evo-legende { color: var(--orange); background: var(--orange-fond); }
+.evo-filtre { font-size: 13px; margin-bottom: 8px; }
+.evo-auto { background: var(--rouge-fond); border-radius: 10px; padding: 8px 12px; margin-bottom: 10px; }
+.evo-auto .sec { margin-top: 0; color: var(--rouge); }
+.evo-auto-ligne { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13.5px; margin-bottom: 4px; }
+.evo-form { margin-bottom: 12px; box-shadow: none; }
+.evo-form label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin: 8px 0 2px; }
+.evo-form input, .evo-form select, .evo-form textarea { width: 100%; box-sizing: border-box; border: 1px solid var(--bord); background: var(--card); color: var(--txt); border-radius: 8px; padding: 6px 8px; font: inherit; font-size: 14px; }
+.evo-liste { display: flex; flex-direction: column; }
+.evo-ligne { display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid var(--bord); }
+.evo-ligne:first-child { border-top: 0; }
+.evo-ligne.abandonne { opacity: .55; }
+.evo-ligne.abandonne .evo-tete b { text-decoration: line-through; }
+.evo-date { flex: none; width: 82px; font-size: 13px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.evo-corps { flex: 1; min-width: 0; }
+.evo-tete { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 14.5px; }
+.evo-code { border: 1px solid var(--bord); background: var(--gris-fond); color: var(--txt); border-radius: 6px; padding: 0 6px; font-size: 12px; font-weight: 800; cursor: pointer; }
+.evo-avant-apres { font-size: 13.5px; margin-top: 4px; }
+.evo-avant-apres span { color: var(--muted); text-decoration: line-through; }
+.evo-motif { font-size: 13.5px; color: var(--muted); margin-top: 4px; white-space: pre-line; }
+.evo-pied { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 6px; font-size: 12.5px; }
+.evo-suppr { color: var(--rouge); }
+@media (max-width: 560px) { .evo-ligne { flex-direction: column; gap: 2px; } .evo-date { width: auto; } }
 
 /* Formulaires */
 label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin: 12px 0 5px; }

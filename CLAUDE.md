@@ -40,6 +40,11 @@ le 25/09/2026 : code, schéma, Edge Function, Worker).
   une ligne par version, rédigée par le **secrétaire** (`Deposer-FicheProjet`, consigne : section « Fiches projet » de `Projects\secretaire-mails\CLAUDE.md` ; toute session peut la suivre avec le compte du secrétaire) ;
   écran `/projets/:id/fiche` (récap, partie commune, lots avec nos activités surlignées, notre partie).
   Lecture : tous les membres ; une fiche modifiée par Joseph devient intouchable pour le secrétaire.
+- Journal des évolutions (`gestion_projets.evolutions`, 28/09/2026) : écarts avec le formulaire (retard, calendrier,
+  budget, activité, livrable, partenariat, décision), statut constaté → proposé → validé CdP → approuvé → intégré,
+  sources via `sources.evolution_id`. Écrit par Joseph (dans la fiche) et le secrétaire (`Nouvelle-Evolution`,
+  `Maj-Evolution`) ; lu par tous. Retards de livrables détectés automatiquement (période du formulaire comparée au
+  livrable suivi, fin de période = `periodes.date_fin` ou début du projet + 6 mois × n), sans enregistrement.
 
 ## Scripts (PowerShell 5.1 : enregistrer en UTF-8 **avec BOM**)
 - `scripts/sql.ps1 -File x.sql | -Query "…" [-ReadOnly]` : SQL via l'API Management (jeton admin).

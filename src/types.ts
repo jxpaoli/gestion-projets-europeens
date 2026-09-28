@@ -158,7 +158,7 @@ export interface Periode {
 export type TypeSource = "mail" | "document" | "reunion" | "autre";
 
 // Élément auquel une source est rattachée (une seule de ces colonnes est remplie).
-export type ChampCible = "action_id" | "echeance_id" | "livrable_id" | "periode_id" | "point_id" | "info_id";
+export type ChampCible = "action_id" | "echeance_id" | "livrable_id" | "periode_id" | "point_id" | "info_id" | "evolution_id";
 
 export interface Source {
   id: string;
@@ -168,6 +168,7 @@ export interface Source {
   periode_id: string | null;
   point_id: string | null;
   info_id: string | null;
+  evolution_id: string | null;
   type: TypeSource;
   date_source: string | null;
   expediteur: string | null;
@@ -232,6 +233,26 @@ export interface FicheProjet {
   document_id: string | null;
   document_nom: string | null;
   contenu: ContenuFiche;
+  modifie_par_admin: boolean;
+  ajoute_par: string | null;
+  updated_at: string;
+}
+
+// Journal des évolutions : ce qui a bougé par rapport au formulaire (retard, changement, décision…).
+export type TypeEvolution = "retard" | "calendrier" | "budget" | "activite" | "livrable" | "partenariat" | "decision" | "autre";
+export type StatutEvolution = "constate" | "propose" | "valide_cdp" | "approuve" | "integre" | "abandonne";
+export interface Evolution {
+  id: string;
+  projet_id: string;
+  date_evolution: string;
+  type: TypeEvolution;
+  element: string | null;
+  titre: string;
+  avant: string | null;
+  apres: string | null;
+  motif: string | null;
+  statut: StatutEvolution;
+  version_integree: number | null;
   modifie_par_admin: boolean;
   ajoute_par: string | null;
   updated_at: string;

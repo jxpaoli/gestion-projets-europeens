@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { db } from "./supabase";
-import type { Action, CibleSource, DocumentProjet, ReunionInfo, ReunionPoint, Echeance, EtapePeriode, Evenement, Livrable, NouvelleSource, Passage, Periode, Projet, Role, Source, StatutAction } from "./types";
+import type { Action, CibleSource, DocumentProjet, Evolution, ReunionInfo, ReunionPoint, Echeance, EtapePeriode, Evenement, Livrable, NouvelleSource, Passage, Periode, Projet, Role, Source, StatutAction } from "./types";
 
 export interface Donnees {
   projets: Projet[];
@@ -16,6 +16,7 @@ export interface Donnees {
   infos: ReunionInfo[];
   points: ReunionPoint[];
   sources: Source[];
+  evolutions: Evolution[];
 }
 
 interface DonneesCtx {
@@ -32,6 +33,9 @@ interface DonneesCtx {
   majPoint: (id: string, champs: Partial<ReunionPoint>) => Promise<string>;
   ajouterSource: (cible: Pick<CibleSource, "champ" | "id">, s: NouvelleSource) => Promise<string>;
   supprimerSource: (id: string) => Promise<string>;
+  // Journal des évolutions : création (sans id) ou modification ; renvoie un message d'erreur ou "".
+  enregistrerEvolution: (e: Partial<Evolution> & Pick<Evolution, "projet_id" | "titre">) => Promise<string>;
+  supprimerEvolution: (id: string) => Promise<string>;
   // Élément dont le panneau des sources est ouvert, ou null.
   voirSources: CibleSource | null;
   setVoirSources: (c: CibleSource | null) => void;
@@ -57,7 +61,7 @@ export function DonneesProvider({ estAdmin, children }: { estAdmin: boolean; chi
 
   const recharger = useCallback(async () => {
     try {
-      const [projets, actions, echeances, livrables, periodes, etapes, evenements, passages, documents, parametres, infos, points, sources] = await Promise.all([
+      const [projets, actions, echeances, livrables, periodes, etapes, evenements, passages, documents, parametres, infos, points, sources, evolutions] = await Promise.all([
         lire<Projet>("projets", "acronyme"),
         lire<Action>("actions", "echeance"),
         lire<Echeance>("echeances", "date"),
@@ -72,9 +76,10 @@ export function DonneesProvider({ estAdmin, children }: { estAdmin: boolean; chi
         lire<ReunionInfo>("reunion_infos", "ordre"),
         lire<ReunionPoint>("reunion_points", "ordre"),
         lire<Source>("sources", "date_source"),
+        lire<Evolution>("evolutions", "date_evolution"),
       ]);
       setDonnees({ projets, actions, echeances, livrables, periodes, etapes, evenements, dernierPassage: passages[0] ?? null,
-        documents, parametres: Object.fromEntries(parametres.map((p) => [p.cle, p.valeur])), infos, points, sources });
+        documents, parametres: Object.fromEntries(parametres.map((p) => [p.cle, p.valeur])), infos, points, sources, evolutions });
       setErreur("");
     } catch (e) {
       setErreur(e instanceof Error ? e.message : "Chargement impossible");
@@ -141,6 +146,21 @@ export function DonneesProvider({ estAdmin, children }: { estAdmin: boolean; chi
     return "";
   };
 
+  const enregistrerEvolution = async (e: Partial<Evolution> & Pick<Evolution, "projet_id" | "titre">) => {
+    const { id, updated_at, modifie_par_admin, ajoute_par, ...champs } = e;
+    const { error } = id ? await db.from("evolutions").update(champs).eq("id", id) : await db.from("evolutions").insert(champs);
+    if (error) return error.message;
+    await recharger();
+    return "";
+  };
+
+  const supprimerEvolution = async (id: string) => {
+    const { error } = await db.from("evolutions").delete().eq("id", id);
+    if (error) return error.message;
+    await recharger();
+    return "";
+  };
+
   const commenter = async (actionId: string, message: string) => {
     const { error } = await db.from("actions_evenements").insert({ action_id: actionId, type: "commentaire", message });
     if (error) return error.message;
@@ -157,7 +177,7 @@ export function DonneesProvider({ estAdmin, children }: { estAdmin: boolean; chi
 
   return (
     <Ctx.Provider value={{ donnees, erreur, estAdmin, recharger, projet, cocherAction, enregistrerAction, supprimerAction, commenter, majPoint,
-      ajouterSource, supprimerSource, voirSources, setVoirSources, editer, setEditer }}>
+      ajouterSource, supprimerSource, enregistrerEvolution, supprimerEvolution, voirSources, setVoirSources, editer, setEditer }}>
       {children}
     </Ctx.Provider>
   );
