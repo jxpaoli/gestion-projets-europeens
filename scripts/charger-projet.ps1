@@ -2,7 +2,7 @@
 # produit à partir des mémoires du projet. Ne fait rien si l'acronyme existe déjà.
 # Usage : .\scripts\charger-projet.ps1 -Json seed_jason.json -Couleur "#7a3fb0" -Dossier JASON
 # -Dossier : nom du dossier du projet dans OneDrive « Projets européens » ; avec lui, les mails cités « #n »
-# dans les sources sont aussitôt reliés à index-mails.csv (relier-sources-mails.ps1).
+# et les documents cités par leur nom sont aussitôt reliés (indexer-documents.ps1 puis relier-sources.ps1).
 param([Parameter(Mandatory)][string]$Json, [string]$Couleur, [string]$Dossier)
 
 $ErrorActionPreference = "Stop"
@@ -60,4 +60,7 @@ select (select count(*) from p) as projet, (select count(*) from a) as actions, 
 $tmp = Join-Path ([IO.Path]::GetTempPath()) ("charger-" + [guid]::NewGuid() + ".sql")
 [IO.File]::WriteAllText($tmp, $sql, (New-Object Text.UTF8Encoding $false))
 try { & (Join-Path $PSScriptRoot "sql.ps1") -File $tmp } finally { Remove-Item $tmp -ErrorAction SilentlyContinue }
-if ($Dossier) { & (Join-Path $PSScriptRoot "relier-sources-mails.ps1") }
+if ($Dossier) {
+  & (Join-Path $PSScriptRoot "indexer-documents.ps1")
+  & (Join-Path $PSScriptRoot "relier-sources.ps1")
+}

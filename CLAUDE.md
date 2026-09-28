@@ -1,6 +1,7 @@
 # Projets européens – EPCI de Corse – Ports HC (europa.master.corsica)
 
-Appli de pilotage des projets européens de Joseph X. Paoli (EASY2LOG, JASON, BLUE HUB…) :
+Appli de pilotage des projets européens de Joseph X. Paoli (EASY2LOG, JASON, BLUE HUB, H2MOVE, GREENBAY ;
+candidatures ICON et APPRODO) :
 agenda, actions façon « ticket », réunions (fiche pratique + mode séance), documents OneDrive,
 finances, livrables, rapport pour la direction. Elle a remplacé la Boutique AS Casinca (supprimée
 le 25/09/2026 : code, schéma, Edge Function, Worker).
@@ -32,12 +33,18 @@ le 25/09/2026 : code, schéma, Edge Function, Worker).
 - Documents : restent sur OneDrive pro (`OneDrive - EPCI DE CORSE\Projets européens\`) ; l'appli
   n'indexe que les noms (`scripts/indexer-documents.ps1`). Pièces jointes : admin seul.
 - Environnement projet (mémoires .md, data/ CSV) : même dossier OneDrive, relié par liens.
+- Sources (`gestion_projets.sources`, 28/09/2026) : plusieurs par élément (action, échéance, livrable, période,
+  point, info) ; mail = date + expéditeur + objet (pas d'accès à la messagerie, l'objet sert à le retrouver),
+  document, réunion ou autre. Composant commun `src/Sources.tsx`.
 
 ## Scripts (PowerShell 5.1 : enregistrer en UTF-8 **avec BOM**)
 - `scripts/sql.ps1 -File x.sql | -Query "…" [-ReadOnly]` : SQL via l'API Management (jeton admin).
 - `scripts/indexer-documents.ps1` : réindexe les documents OneDrive.
 - `scripts/exporter-csv.ps1` : exporte actions / échéances / livrables / finances vers `<projet>\data\`.
-- `scripts/charger-projet.ps1` : charge un projet depuis un JSON extrait des mémoires.
+- `scripts/charger-projet.ps1 -Json x.json -Dossier <dossier OneDrive>` : charge un projet depuis un JSON extrait
+  des mémoires, puis réindexe les documents et relie ses sources.
+- `scripts/relier-sources.ps1 [-Simulation]` : relie le texte « source » des actions aux mails de `index-mails.csv`
+  (« #n », « index EASY2LOG #n ») et aux documents cités par leur nom. Relançable sans doublon.
 - `scripts/secretaire.ps1` : outils du secrétaire (son compte, jamais le jeton admin).
 
 ## Conventions
