@@ -1,6 +1,7 @@
 import { useDonnees } from "../donnees";
 import { aujourdhui, date, montant, pourcent } from "../format";
 import { PastilleProjet } from "../composants";
+import { BoutonSources } from "../Sources";
 import type { Periode } from "../types";
 
 const somme = (ps: Periode[], k: "prevu" | "declare" | "certifie" | "paye") => {
@@ -68,7 +69,8 @@ export default function Finances() {
                     <tbody>
                       {ps.map((x) => (
                         <tr key={x.id} title={x.observations ?? ""}>
-                          <td>P{x.numero}<div className="muted" style={{ fontSize: 11 }}>{date(x.date_debut)} → {date(x.date_fin)}</div></td>
+                          <td>P{x.numero}<div className="muted" style={{ fontSize: 11 }}>{date(x.date_debut)} → {date(x.date_fin)}</div>
+                            <BoutonSources ajout cible={{ champ: "periode_id", id: x.id, titre: `${p.acronyme} – période ${x.numero}`, projetId: p.id, texte: x.observations }} /></td>
                           <td className="num">{montant(x.prevu)}</td>
                           <td className="num">{montant(x.declare)}</td>
                           <td className="num">{montant(x.certifie)}</td>

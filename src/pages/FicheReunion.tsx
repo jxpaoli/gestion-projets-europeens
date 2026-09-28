@@ -6,6 +6,7 @@ import { BadgesTicket, BlocDate, CaseFait, LienDoc, PastilleProjet } from "../co
 import { lienFichier } from "../onedrive";
 import { documentsDeReunion, heure, lienGps } from "../reunions";
 import { useEcranLarge } from "../indicateurs";
+import { BoutonSources } from "../Sources";
 import type { Action, CategorieInfo, Echeance, ReunionPoint } from "../types";
 
 const CATEGORIES: { code: CategorieInfo; libelle: string; icone: string }[] = [
@@ -46,6 +47,7 @@ export default function FicheReunion({ seance = false }: { seance?: boolean }) {
             <span className="badge">{LIB_TYPE_ECHEANCE[e.type]}</span>
             <span>{date(e.date)}{e.heure_debut ? ` · ${heure(e.heure_debut)}` : ""}{e.heure_fin ? `–${heure(e.heure_fin)}` : ""}</span>
             {e.format && <span className="badge bleu">{FORMAT[e.format]}</span>}
+            <BoutonSources ajout cible={{ champ: "echeance_id", id: e.id, titre: e.libelle, projetId: e.projet_id }} />
           </div>
         </div>
       </div>
@@ -116,6 +118,7 @@ export default function FicheReunion({ seance = false }: { seance?: boolean }) {
                       {i.adresse && <a href={lienGps(i.adresse)} target="_blank" rel="noreferrer">📍 {i.adresse}</a>}
                       {i.telephone && <a href={`tel:${i.telephone.replace(/[^\d+]/g, "")}`}>📞 {i.telephone}</a>}
                       {i.lien && <a href={i.lien} target="_blank" rel="noreferrer">🔗 Lien</a>}
+                      <BoutonSources cible={{ champ: "info_id", id: i.id, titre: i.titre, projetId: e.projet_id }} />
                     </div>
                   </div>
                 </div>
@@ -128,7 +131,8 @@ export default function FicheReunion({ seance = false }: { seance?: boolean }) {
         <>
           <div className="sec">🗓 Ordre du jour</div>
           <ol className="odj">
-            {points.map((pt) => <li key={pt.id}>{pt.titre}{pt.intervenant ? <span className="muted"> – {pt.intervenant}</span> : null}</li>)}
+            {points.map((pt) => <li key={pt.id}>{pt.titre}{pt.intervenant ? <span className="muted"> – {pt.intervenant}</span> : null}{" "}
+              <BoutonSources cible={{ champ: "point_id", id: pt.id, titre: pt.titre, projetId: e.projet_id }} /></li>)}
           </ol>
         </>
       )}
@@ -149,7 +153,8 @@ function ActionsReunion({ e }: { e: Echeance }) {
   const ajouter = async (ev: FormEvent) => {
     ev.preventDefault();
     if (!texte.trim()) return;
-    const m = await enregistrerAction({ projet_id: e.projet_id, libelle: texte.trim(), echeance_id: e.id, echeance: echeance || null, source: e.libelle });
+    const m = await enregistrerAction({ projet_id: e.projet_id, libelle: texte.trim(), echeance_id: e.id, echeance: echeance || null, source: e.libelle },
+      [{ type: "reunion", reunion_id: e.id, objet: e.libelle, date_source: e.date }]);
     if (m) setErr(m); else { setTexte(""); setEcheance(""); setErr(""); }
   };
 
@@ -162,6 +167,7 @@ function ActionsReunion({ e }: { e: Echeance }) {
           {a.echeance && <span>avant le {date(a.echeance)}</span>}
           {a.responsable && <span>{a.responsable}</span>}
           <BadgesTicket a={a} />
+          <BoutonSources cible={{ champ: "action_id", id: a.id, titre: a.libelle, projetId: a.projet_id, texte: a.source }} />
         </div>
       </div>
     </div>
@@ -214,6 +220,7 @@ function OrdreDuJour({ points }: { points: ReunionPoint[] }) {
               <span className="point-num">{pt.statut === "traite" ? "✓" : i + 1}</span>
               <b>{pt.titre}</b>
               {pt.intervenant && <span className="muted"> – {pt.intervenant}</span>}
+              <BoutonSources cible={{ champ: "point_id", id: pt.id, titre: pt.titre, projetId: null }} />
             </div>
             {(pt.statut === "en_cours" || pt.notes) && <Notes point={pt} lectureSeule={!estAdmin} />}
           </div>

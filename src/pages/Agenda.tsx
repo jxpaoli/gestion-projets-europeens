@@ -4,7 +4,8 @@ import { ajouterJours, aujourdhui, date, LIB_STATUT_ACTION, LIB_STATUT_LIVRABLE,
 import { BadgesTicket, BlocDate, CaseFait, ChoixHorizon, FiltreProjets, HORIZONS, LienDoc, PastilleProjet } from "../composants";
 import { MON_NOM, usePreference } from "../preferences";
 import { Anneau } from "../indicateurs";
-import type { Action } from "../types";
+import { BoutonSources } from "../Sources";
+import type { Action, CibleSource } from "../types";
 
 interface Ligne {
   cle: string;
@@ -15,6 +16,7 @@ interface Ligne {
   detail: string;
   lien: string | null;
   action?: Action;
+  cible: CibleSource;
 }
 
 const ouverte = (s: string) => s === "a_faire" || s === "en_cours";
@@ -39,16 +41,19 @@ export default function Agenda({ sansIndicateurs = false }: { sansIndicateurs?: 
     const tout: Ligne[] = [];
     for (const e of donnees.echeances) {
       if (e.statut !== "prevu" || !duProjet(e.projet_id)) continue;
-      tout.push({ cle: `e${e.id}`, date: e.date, projetId: e.projet_id, genre: LIB_TYPE_ECHEANCE[e.type], libelle: e.libelle, detail: e.lieu ?? "", lien: e.lien });
+      tout.push({ cle: `e${e.id}`, date: e.date, projetId: e.projet_id, genre: LIB_TYPE_ECHEANCE[e.type], libelle: e.libelle, detail: e.lieu ?? "", lien: e.lien,
+        cible: { champ: "echeance_id", id: e.id, titre: e.libelle, projetId: e.projet_id } });
     }
     for (const a of donnees.actions) {
       const visible = ouverte(a.statut) || (a.statut === "fait" && cocheesIci.has(a.id));
       if (!visible || !a.echeance || !duProjet(a.projet_id) || !pourMoi(a.responsable)) continue;
-      tout.push({ cle: `a${a.id}`, date: a.echeance, projetId: a.projet_id, genre: "Action", libelle: a.libelle, detail: [moi ? null : a.responsable, LIB_STATUT_ACTION[a.statut]].filter(Boolean).join(" · "), lien: null, action: a });
+      tout.push({ cle: `a${a.id}`, date: a.echeance, projetId: a.projet_id, genre: "Action", libelle: a.libelle, detail: [moi ? null : a.responsable, LIB_STATUT_ACTION[a.statut]].filter(Boolean).join(" · "), lien: null, action: a,
+        cible: { champ: "action_id", id: a.id, titre: a.libelle, projetId: a.projet_id, texte: a.source } });
     }
     for (const v of donnees.livrables) {
       if (!ouverte(v.statut) || !v.echeance || !duProjet(v.projet_id) || !pourMoi(v.responsable)) continue;
-      tout.push({ cle: `l${v.id}`, date: v.echeance, projetId: v.projet_id, genre: "Livrable", libelle: [v.code, v.titre].filter(Boolean).join(" – "), detail: [moi ? null : v.responsable, LIB_STATUT_LIVRABLE[v.statut]].filter(Boolean).join(" · "), lien: v.lien });
+      tout.push({ cle: `l${v.id}`, date: v.echeance, projetId: v.projet_id, genre: "Livrable", libelle: [v.code, v.titre].filter(Boolean).join(" – "), detail: [moi ? null : v.responsable, LIB_STATUT_LIVRABLE[v.statut]].filter(Boolean).join(" · "), lien: v.lien,
+        cible: { champ: "livrable_id", id: v.id, titre: [v.code, v.titre].filter(Boolean).join(" – "), projetId: v.projet_id } });
     }
     tout.sort((x, y) => x.date.localeCompare(y.date));
     return {
@@ -83,6 +88,7 @@ export default function Agenda({ sansIndicateurs = false }: { sansIndicateurs?: 
           {l.detail && <span>{l.detail}</span>}
           {l.action && <BadgesTicket a={l.action} />}
           <LienDoc href={l.lien} />
+          <BoutonSources cible={l.cible} />
         </div>
       </div>
     </div>

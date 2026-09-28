@@ -155,6 +155,43 @@ export interface Periode {
   observations: string | null;
 }
 
+export type TypeSource = "mail" | "document" | "reunion" | "autre";
+
+// Élément auquel une source est rattachée (une seule de ces colonnes est remplie).
+export type ChampCible = "action_id" | "echeance_id" | "livrable_id" | "periode_id" | "point_id" | "info_id";
+
+export interface Source {
+  id: string;
+  action_id: string | null;
+  echeance_id: string | null;
+  livrable_id: string | null;
+  periode_id: string | null;
+  point_id: string | null;
+  info_id: string | null;
+  type: TypeSource;
+  date_source: string | null;
+  expediteur: string | null;
+  objet: string | null;
+  lien: string | null;
+  mail_ref: string | null;
+  numero: number | null;
+  document_id: string | null;
+  reunion_id: string | null;
+  ajoute_par: string | null;
+  created_at: string;
+}
+
+export type NouvelleSource = Pick<Source, "type"> & Partial<Pick<Source, "date_source" | "expediteur" | "objet" | "lien" | "document_id" | "reunion_id">>;
+
+// Ce que le panneau des sources affiche : l'élément, son titre, son projet, et l'ancienne source en texte libre.
+export interface CibleSource {
+  champ: ChampCible;
+  id: string;
+  titre: string;
+  projetId: string | null;
+  texte?: string | null;
+}
+
 export interface DocumentProjet {
   id: string;
   projet_id: string | null;

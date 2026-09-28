@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useDonnees } from "../donnees";
 import { aujourdhui, date, LIB_STATUT_ACTION } from "../format";
 import { BadgesTicket, BlocDate, CaseFait, FiltreProjets, PastilleProjet } from "../composants";
+import { BoutonSources } from "../Sources";
 import type { Action } from "../types";
 
 export default function Actions() {
@@ -46,7 +47,7 @@ export default function Actions() {
           {a.statut !== "fait" && <span className={`badge${a.statut === "en_cours" ? " orange" : ""}`}>{LIB_STATUT_ACTION[a.statut]}</span>}
           <BadgesTicket a={a} />
           {a.responsable && <span>{a.responsable}</span>}
-          {a.source && <span>· {a.source}</span>}
+          <BoutonSources cible={{ champ: "action_id", id: a.id, titre: a.libelle, projetId: a.projet_id, texte: a.source }} />
         </div>
         {a.notes && <div className="meta">{a.notes}</div>}
       </div>

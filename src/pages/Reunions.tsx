@@ -5,6 +5,7 @@ import { aujourdhui, date, LIB_TYPE_ECHEANCE } from "../format";
 import { BlocDate, FiltreProjets, PastilleProjet } from "../composants";
 import { usePreference } from "../preferences";
 import { estReunion, heure } from "../reunions";
+import { BoutonSources } from "../Sources";
 
 // Liste des réunions : à venir en premier ; les passées sur demande.
 export default function Reunions() {
@@ -32,6 +33,7 @@ export default function Reunions() {
             {(e.lieu_nom || e.lieu) && <span>📍 {e.lieu_nom || e.lieu}</span>}
             {nbActions > 0 && <span className="badge orange">{nbActions} à faire</span>}
             {avecFiche.has(e.id) && <span className="badge vert">fiche</span>}
+            <BoutonSources cible={{ champ: "echeance_id", id: e.id, titre: e.libelle, projetId: e.projet_id }} />
           </div>
         </div>
       </Link>

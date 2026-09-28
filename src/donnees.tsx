@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { db } from "./supabase";
-import type { Action, DocumentProjet, ReunionInfo, ReunionPoint, Echeance, EtapePeriode, Evenement, Livrable, Passage, Periode, Projet, Role, StatutAction } from "./types";
+import type { Action, CibleSource, DocumentProjet, ReunionInfo, ReunionPoint, Echeance, EtapePeriode, Evenement, Livrable, NouvelleSource, Passage, Periode, Projet, Role, Source, StatutAction } from "./types";
 
 export interface Donnees {
   projets: Projet[];
@@ -15,6 +15,7 @@ export interface Donnees {
   parametres: Record<string, string>;
   infos: ReunionInfo[];
   points: ReunionPoint[];
+  sources: Source[];
 }
 
 interface DonneesCtx {
@@ -24,10 +25,16 @@ interface DonneesCtx {
   recharger: () => Promise<void>;
   projet: (id: string) => Projet | undefined;
   cocherAction: (a: Action) => Promise<void>;
-  enregistrerAction: (a: Partial<Action> & Pick<Action, "projet_id" | "libelle">) => Promise<string>;
+  // Les sources passées sont rattachées à l'action après sa création.
+  enregistrerAction: (a: Partial<Action> & Pick<Action, "projet_id" | "libelle">, sources?: NouvelleSource[]) => Promise<string>;
   supprimerAction: (id: string) => Promise<string>;
   commenter: (actionId: string, message: string) => Promise<string>;
   majPoint: (id: string, champs: Partial<ReunionPoint>) => Promise<string>;
+  ajouterSource: (cible: Pick<CibleSource, "champ" | "id">, s: NouvelleSource) => Promise<string>;
+  supprimerSource: (id: string) => Promise<string>;
+  // Élément dont le panneau des sources est ouvert, ou null.
+  voirSources: CibleSource | null;
+  setVoirSources: (c: CibleSource | null) => void;
   // Action ouverte dans la fiche d'édition : une action existante, "nouvelle", ou null (fermée).
   editer: Action | "nouvelle" | null;
   setEditer: (a: Action | "nouvelle" | null) => void;
@@ -46,10 +53,11 @@ export function DonneesProvider({ estAdmin, children }: { estAdmin: boolean; chi
   const [donnees, setDonnees] = useState<Donnees | null>(null);
   const [erreur, setErreur] = useState("");
   const [editer, setEditer] = useState<Action | "nouvelle" | null>(null);
+  const [voirSources, setVoirSources] = useState<CibleSource | null>(null);
 
   const recharger = useCallback(async () => {
     try {
-      const [projets, actions, echeances, livrables, periodes, etapes, evenements, passages, documents, parametres, infos, points] = await Promise.all([
+      const [projets, actions, echeances, livrables, periodes, etapes, evenements, passages, documents, parametres, infos, points, sources] = await Promise.all([
         lire<Projet>("projets", "acronyme"),
         lire<Action>("actions", "echeance"),
         lire<Echeance>("echeances", "date"),
@@ -63,9 +71,10 @@ export function DonneesProvider({ estAdmin, children }: { estAdmin: boolean; chi
         lire<{ cle: string; valeur: string }>("parametres", "cle"),
         lire<ReunionInfo>("reunion_infos", "ordre"),
         lire<ReunionPoint>("reunion_points", "ordre"),
+        lire<Source>("sources", "date_source"),
       ]);
       setDonnees({ projets, actions, echeances, livrables, periodes, etapes, evenements, dernierPassage: passages[0] ?? null,
-        documents, parametres: Object.fromEntries(parametres.map((p) => [p.cle, p.valeur])), infos, points });
+        documents, parametres: Object.fromEntries(parametres.map((p) => [p.cle, p.valeur])), infos, points, sources });
       setErreur("");
     } catch (e) {
       setErreur(e instanceof Error ? e.message : "Chargement impossible");
@@ -93,7 +102,7 @@ export function DonneesProvider({ estAdmin, children }: { estAdmin: boolean; chi
   };
 
   // Création (sans id) ou modification d'une action ; renvoie un message d'erreur, ou "" si c'est enregistré.
-  const enregistrerAction = async (a: Partial<Action> & Pick<Action, "projet_id" | "libelle">) => {
+  const enregistrerAction = async (a: Partial<Action> & Pick<Action, "projet_id" | "libelle">, sources: NouvelleSource[] = []) => {
     const { id, updated_at, ...champs } = a;
     if (id) {
       // Refusé si quelqu'un (le secrétaire) a modifié l'action depuis son ouverture : pas d'écrasement silencieux.
@@ -101,8 +110,12 @@ export function DonneesProvider({ estAdmin, children }: { estAdmin: boolean; chi
       if (error) return error.message;
       if (!data?.length) { await recharger(); return "Cette action vient d'être modifiée par ailleurs. Elle a été rechargée : vérifie et réessaie."; }
     } else {
-      const { error } = await db.from("actions").insert(champs);
+      const { data, error } = await db.from("actions").insert(champs).select("id").single();
       if (error) return error.message;
+      if (sources.length) {
+        const { error: e } = await db.from("sources").insert(sources.map((s) => ({ ...s, action_id: data.id })));
+        if (e) { await recharger(); return `Action créée, mais sources non enregistrées : ${e.message}`; }
+      }
     }
     await recharger();
     return "";
@@ -112,6 +125,20 @@ export function DonneesProvider({ estAdmin, children }: { estAdmin: boolean; chi
     setDonnees((d) => d && ({ ...d, points: d.points.map((p) => (p.id === id ? { ...p, ...champs } : p)) }));
     const { error } = await db.from("reunion_points").update(champs).eq("id", id);
     return error ? error.message : "";
+  };
+
+  const ajouterSource = async (cible: Pick<CibleSource, "champ" | "id">, s: NouvelleSource) => {
+    const { data, error } = await db.from("sources").insert({ ...s, [cible.champ]: cible.id }).select().single();
+    if (error) return error.code === "23505" ? "Ce mail est déjà cité." : error.message;
+    setDonnees((d) => d && ({ ...d, sources: [...d.sources, data as Source] }));
+    return "";
+  };
+
+  const supprimerSource = async (id: string) => {
+    const { error } = await db.from("sources").delete().eq("id", id);
+    if (error) return error.message;
+    setDonnees((d) => d && ({ ...d, sources: d.sources.filter((x) => x.id !== id) }));
+    return "";
   };
 
   const commenter = async (actionId: string, message: string) => {
@@ -129,7 +156,8 @@ export function DonneesProvider({ estAdmin, children }: { estAdmin: boolean; chi
   };
 
   return (
-    <Ctx.Provider value={{ donnees, erreur, estAdmin, recharger, projet, cocherAction, enregistrerAction, supprimerAction, commenter, majPoint, editer, setEditer }}>
+    <Ctx.Provider value={{ donnees, erreur, estAdmin, recharger, projet, cocherAction, enregistrerAction, supprimerAction, commenter, majPoint,
+      ajouterSource, supprimerSource, voirSources, setVoirSources, editer, setEditer }}>
       {children}
     </Ctx.Provider>
   );

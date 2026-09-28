@@ -3,7 +3,8 @@ import { useDonnees } from "./donnees";
 import { date, LIB_PRIORITE, LIB_STATUT_ACTION } from "./format";
 import { libQui } from "./composants";
 import { MON_NOM } from "./preferences";
-import type { Action, Evenement, Priorite, StatutAction } from "./types";
+import { AjoutSource, ListeSources, SourcesEnAttente } from "./Sources";
+import type { Action, Evenement, NouvelleSource, Priorite, StatutAction } from "./types";
 
 // Fiche d'une action en panneau (bas d'écran sur téléphone) : création rapide ou modification. Admin seulement.
 export default function FicheAction() {
@@ -31,6 +32,7 @@ function Formulaire({ action, fermer, enregistrer, supprimer }: {
   const [priorite, setPriorite] = useState<Priorite>(action?.priorite ?? "normale");
   const [notes, setNotes] = useState(action?.notes ?? "");
   const [source, setSource] = useState(action?.source ?? "");
+  const [sourcesAttente, setSourcesAttente] = useState<NouvelleSource[]>([]);
   const [plus, setPlus] = useState(!!action);
   const [err, setErr] = useState("");
   const [occupe, setOccupe] = useState(false);
@@ -54,7 +56,7 @@ function Formulaire({ action, fermer, enregistrer, supprimer }: {
       priorite,
       notes: notes.trim() || null,
       source: source.trim() || null,
-    });
+    }, action ? [] : sourcesAttente);
     setOccupe(false);
     if (message) setErr(message); else fermer();
   };
@@ -115,10 +117,17 @@ function Formulaire({ action, fermer, enregistrer, supprimer }: {
             <label htmlFor="fa-notes">Notes</label>
             <textarea id="fa-notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
 
-            <label htmlFor="fa-source">Source (mail, réunion…)</label>
+            <label htmlFor="fa-source">Note de source (texte libre)</label>
             <input id="fa-source" value={source} onChange={(e) => setSource(e.target.value)} />
           </>
         )}
+
+        <label>Sources</label>
+        {action
+          ? <><ListeSources cible={{ champ: "action_id", id: action.id, titre: action.libelle, projetId: action.projet_id }} modifiable />
+              <AjoutSource cible={{ champ: "action_id", id: action.id }} projetId={action.projet_id} /></>
+          : <><SourcesEnAttente liste={sourcesAttente} retirer={(i) => setSourcesAttente((l) => l.filter((_, j) => j !== i))} />
+              <AjoutSource projetId={projetId} onAjout={(s) => setSourcesAttente((l) => [...l, s])} /></>}
 
         {err && <div className="login-err">{err}</div>}
         <button type="submit" className="btn-primary" disabled={occupe}>{occupe ? "Enregistrement…" : "Enregistrer"}</button>

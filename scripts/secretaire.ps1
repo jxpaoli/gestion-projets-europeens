@@ -13,9 +13,13 @@
 #   . C:\Users\jxpao\Claude\Projects\gestion-projets-europeens\scripts\secretaire.ps1
 #   $p = Debut-Passage -Du 2026-09-20 -Au 2026-09-25
 #   Get-Projets
-#   Nouvelle-Action -Projet JASON -Libelle "Relancer le LaMMA" -MailRef "VERSE-<unid>" -Source "Mail de X du 24/09 : …" -DateSource "2026-09-24T10:12:00+02:00" -Echeance 2026-10-05
-#   Cocher-Action -Id <uuid> -Source "Mail de X du 25/09 : reçu" -DateSource "2026-09-25T09:00:00+02:00"
-#   Rouvrir-Action -Id <uuid> -Source "Mail de X du 26/09 : pas reçu" -DateSource "2026-09-26T08:30:00+02:00"
+#   Nouvelle-Action -Projet JASON -Libelle "Relancer le LaMMA" -MailRef "VERSE-<unid>" -Source "#312 (24/09/2026, X) : …" `
+#                   -DateSource "2026-09-24T10:12:00+02:00" -Expediteur "X" -Objet "RE: JASON – WP2" -Numero 312 -Echeance 2026-10-05
+#   Cocher-Action -Id <uuid> -Source "#315 (25/09/2026, X) : reçu" -DateSource "2026-09-25T09:00:00+02:00" -Expediteur "X" -Objet "…" -MailRef "VERSE-<unid>"
+#   Rouvrir-Action -Id <uuid> -Source "#318 (26/09/2026, X) : pas reçu" -DateSource "2026-09-26T08:30:00+02:00" -Expediteur "X" -Objet "…" -MailRef "VERSE-<unid>"
+#   Ajouter-Source -Cible reunion -Id <uuid> -DateSource 2026-09-24 -Expediteur "X" -Objet "…" -MailRef "VERSE-<unid>" -Numero 312
+# Chaque mail cité devient une « source » de l'élément : date, expéditeur et objet EXACT (Joseph le recherche
+# dans sa messagerie à partir de l'objet). La base refuse une source mail sans date, expéditeur ou objet.
 #   Commenter-Action -Id <uuid> -Message "Relance faite (mail du 25/09)"
 #   Fin-Passage -Id $p.id -MailsLus 42 -Creees 3 -Faites 2 -Rouvertes 0 -Commentaires 1
 param([string]$Fichier = "C:\Users\jxpao\Claude\Projects\secretaire-mails\.env.europa.local")
@@ -81,9 +85,23 @@ function Existe-Mail([string]$MailRef) {
   [bool](Api GET "actions?select=id&mail_ref=eq.$([uri]::EscapeDataString($MailRef))")
 }
 
+# Source « mail » d'un élément (action, réunion, point, info). Un mail déjà cité sur le même élément est ignoré.
+function Ajouter-Source {
+  param([Parameter(Mandatory)][ValidateSet('action', 'reunion', 'point', 'info')][string]$Cible, [Parameter(Mandatory)][string]$Id,
+        [Parameter(Mandatory)][string]$DateSource, [Parameter(Mandatory)][string]$Expediteur, [Parameter(Mandatory)][string]$Objet,
+        [string]$MailRef, [int]$Numero)
+  $champ = @{ action = 'action_id'; reunion = 'echeance_id'; point = 'point_id'; info = 'info_id' }[$Cible]
+  $corps = @{ $champ = $Id; type = 'mail'; date_source = $DateSource.Substring(0, 10); expediteur = $Expediteur; objet = $Objet }
+  if ($MailRef) { $corps.mail_ref = $MailRef }
+  if ($Numero) { $corps.numero = $Numero }
+  try { (Api POST "sources" $corps)[0] }
+  catch { if ("$_" -match '23505') { Write-Host "Mail déjà cité sur cet élément : ignoré." } else { throw } }
+}
+
 function Nouvelle-Action {
   param([Parameter(Mandatory)][string]$Projet, [Parameter(Mandatory)][string]$Libelle, [Parameter(Mandatory)][string]$MailRef,
         [Parameter(Mandatory)][string]$Source, [Parameter(Mandatory)][string]$DateSource,
+        [Parameter(Mandatory)][string]$Expediteur, [Parameter(Mandatory)][string]$Objet, [int]$Numero,
         [string]$Echeance, [string]$Responsable, [ValidateSet('haute', 'normale', 'basse')][string]$Priorite = 'normale',
         [string]$Notes, [string]$Reunion)
   if (Existe-Mail $MailRef) { Write-Host "Déjà créée pour ce mail ($MailRef) : ignorée."; return }
@@ -93,15 +111,25 @@ function Nouvelle-Action {
   if ($Responsable) { $corps.responsable = $Responsable }
   if ($Notes) { $corps.notes = $Notes }
   if ($Reunion) { $corps.echeance_id = $Reunion }
-  (Api POST "actions" $corps)[0]
+  $a = (Api POST "actions" $corps)[0]
+  $null = Ajouter-Source -Cible action -Id $a.id -DateSource $DateSource -Expediteur $Expediteur -Objet $Objet -MailRef $MailRef -Numero $Numero
+  $a
 }
 
-function Cocher-Action([Parameter(Mandatory)][string]$Id, [Parameter(Mandatory)][string]$Source, [Parameter(Mandatory)][string]$DateSource) {
-  (Api PATCH "actions?id=eq.$Id" @{ statut = 'fait'; derniere_source = $Source; derniere_source_date = $DateSource })[0]
+function Cocher-Action {
+  param([Parameter(Mandatory)][string]$Id, [Parameter(Mandatory)][string]$Source, [Parameter(Mandatory)][string]$DateSource,
+        [Parameter(Mandatory)][string]$Expediteur, [Parameter(Mandatory)][string]$Objet, [string]$MailRef, [int]$Numero)
+  $a = (Api PATCH "actions?id=eq.$Id" @{ statut = 'fait'; derniere_source = $Source; derniere_source_date = $DateSource })[0]
+  $null = Ajouter-Source -Cible action -Id $Id -DateSource $DateSource -Expediteur $Expediteur -Objet $Objet -MailRef $MailRef -Numero $Numero
+  $a
 }
 
-function Rouvrir-Action([Parameter(Mandatory)][string]$Id, [Parameter(Mandatory)][string]$Source, [Parameter(Mandatory)][string]$DateSource) {
-  (Api PATCH "actions?id=eq.$Id" @{ statut = 'a_faire'; derniere_source = $Source; derniere_source_date = $DateSource })[0]
+function Rouvrir-Action {
+  param([Parameter(Mandatory)][string]$Id, [Parameter(Mandatory)][string]$Source, [Parameter(Mandatory)][string]$DateSource,
+        [Parameter(Mandatory)][string]$Expediteur, [Parameter(Mandatory)][string]$Objet, [string]$MailRef, [int]$Numero)
+  $a = (Api PATCH "actions?id=eq.$Id" @{ statut = 'a_faire'; derniere_source = $Source; derniere_source_date = $DateSource })[0]
+  $null = Ajouter-Source -Cible action -Id $Id -DateSource $DateSource -Expediteur $Expediteur -Objet $Objet -MailRef $MailRef -Numero $Numero
+  $a
 }
 
 function Commenter-Action([Parameter(Mandatory)][string]$Id, [Parameter(Mandatory)][string]$Message) {

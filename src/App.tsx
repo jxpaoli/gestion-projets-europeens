@@ -6,6 +6,7 @@ import { DonneesProvider, useDonnees, useRole } from "./donnees";
 import type { Role } from "./types";
 import Icon from "./Icon";
 import FicheAction from "./FicheAction";
+import { PanneauSources } from "./Sources";
 import Login from "./pages/Login";
 import Agenda from "./pages/Agenda";
 import Actions from "./pages/Actions";
@@ -49,6 +50,8 @@ function Layout({ role }: { role: Role }) {
           <FicheAction />
         </>
       )}
+
+      {donnees && <PanneauSources />}
 
       {/* Téléphone : 5 onglets (Finances, Livrables, Projets dans « Plus ») ; PC : tout. */}
       <nav className="tabbar">
