@@ -1,11 +1,14 @@
 ﻿# Charge un projet (fiche + actions, échéances, livrables, périodes) depuis un fichier JSON
 # produit à partir des mémoires du projet. Ne fait rien si l'acronyme existe déjà.
-# Usage : .\scripts\charger-projet.ps1 -Json seed_jason.json -Couleur "#7a3fb0"
-param([Parameter(Mandatory)][string]$Json, [string]$Couleur)
+# Usage : .\scripts\charger-projet.ps1 -Json seed_jason.json -Couleur "#7a3fb0" -Dossier JASON
+# -Dossier : nom du dossier du projet dans OneDrive « Projets européens » ; avec lui, les mails cités « #n »
+# dans les sources sont aussitôt reliés à index-mails.csv (relier-sources-mails.ps1).
+param([Parameter(Mandatory)][string]$Json, [string]$Couleur, [string]$Dossier)
 
 $ErrorActionPreference = "Stop"
 $contenu = [IO.File]::ReadAllText((Resolve-Path $Json), [Text.Encoding]::UTF8)
 if ($contenu.Contains('$seed$')) { throw "Le JSON contient le délimiteur `$seed`$." }
+$dossierSql = if ($Dossier) { "'" + $Dossier.Replace("'", "''") + "'" } else { "null" }
 $couleurSql = if ($Couleur) { "'" + $Couleur.Replace("'", "''") + "'" } else { "null" }
 
 $sql = @"
@@ -13,9 +16,9 @@ with d as (select `$seed`$$contenu`$seed`$::jsonb as j),
 p as (
   insert into gestion_projets.projets
     (acronyme, titre, programme, id_jems, appel, chef_de_file, n_partenaire, date_debut, date_fin,
-     budget_projet, feder_projet, budget_epci, couleur)
+     budget_projet, feder_projet, budget_epci, couleur, dossier)
   select r.acronyme, r.titre, r.programme, r.id_jems, r.appel, r.chef_de_file, r.n_partenaire, r.date_debut, r.date_fin,
-         r.budget_projet, r.feder_projet, r.budget_epci, $couleurSql
+         r.budget_projet, r.feder_projet, r.budget_epci, $couleurSql, $dossierSql
   from d, jsonb_to_record(d.j -> 'projet') as r(
     acronyme text, titre text, programme text, id_jems text, appel text, chef_de_file text, n_partenaire text,
     date_debut date, date_fin date, budget_projet numeric, feder_projet numeric, budget_epci numeric)
@@ -57,3 +60,4 @@ select (select count(*) from p) as projet, (select count(*) from a) as actions, 
 $tmp = Join-Path ([IO.Path]::GetTempPath()) ("charger-" + [guid]::NewGuid() + ".sql")
 [IO.File]::WriteAllText($tmp, $sql, (New-Object Text.UTF8Encoding $false))
 try { & (Join-Path $PSScriptRoot "sql.ps1") -File $tmp } finally { Remove-Item $tmp -ErrorAction SilentlyContinue }
+if ($Dossier) { & (Join-Path $PSScriptRoot "relier-sources-mails.ps1") }
