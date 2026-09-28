@@ -165,6 +165,47 @@ table.periodes th { color: var(--muted); font-weight: 700; }
 .projet-carte dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: 13.5px; }
 .projet-carte dt { color: var(--muted); font-weight: 600; }
 .projet-carte dd { margin: 0; overflow-wrap: anywhere; }
+.projet-liens { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; }
+
+/* Fiche projet (synthèse du formulaire de candidature) */
+.fiche-projet { display: flex; flex-direction: column; gap: 10px; }
+.fiche-projet .titre { margin-bottom: 2px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.fp-tete { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: flex-start; margin-top: 6px; }
+.fp-tete .muted { font-size: 13px; }
+.fp-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.fp-actions select { border: 1px solid var(--bord); background: var(--card); color: var(--txt); border-radius: 8px; padding: 4px 8px; font: inherit; font-size: 13px; }
+.fp-origine { font-style: italic; color: var(--muted); font-size: 13.5px; margin-bottom: 10px; }
+.fp-recap .kpi b { font-size: 18px; }
+.fp-recap .kpi .muted { font-size: 12px; font-weight: 700; }
+.kpi.nous { background: var(--vert-fond); border-color: transparent; }
+.fp-dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 12px 0 0; font-size: 14px; }
+.fp-dl dt { color: var(--muted); font-weight: 600; }
+.fp-dl dd { margin: 0; }
+.fiche-projet p, .fiche-projet ul { margin: 0 0 8px; line-height: 1.5; font-size: 14.5px; }
+.fiche-projet ul { padding-left: 20px; }
+.fp-nous-bloc { background: var(--vert-fond); border-radius: 10px; padding: 10px 12px 2px; }
+.fp-ecarts { background: var(--orange-fond); border-color: transparent; }
+.fp-ecarts .sec { margin-top: 0; color: var(--orange); }
+.fp-partie { padding: 0; }
+.fp-partie > summary { cursor: pointer; padding: 14px; font-weight: 800; font-size: 15.5px; list-style-position: inside; }
+.fp-corps { padding: 0 14px 14px; }
+.fp-legende { font-size: 12px; font-weight: 700; color: var(--vert); background: var(--vert-fond); border-radius: 999px; padding: 2px 8px; margin-left: 6px; }
+.fp-section, .fp-lot { margin-top: 14px; }
+.fp-section:first-child, .fp-lot:first-child { margin-top: 0; }
+.fp-section h4, .fp-lot h4 { margin: 0 0 6px; font-size: 15px; }
+.fp-page { font-size: 11px; font-weight: 700; color: var(--muted); background: var(--gris-fond); border-radius: 6px; padding: 1px 6px; margin-left: 4px; vertical-align: 1px; }
+.fp-activite { border-left: 3px solid var(--bord); padding: 6px 10px; margin: 6px 0; border-radius: 0 8px 8px 0; opacity: .75; }
+.fp-activite.nous { border-left-color: var(--vert); background: var(--vert-fond); opacity: 1; }
+.fp-activite-tete { font-size: 14px; margin-bottom: 4px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.fp-activite:not(.nous) p { font-size: 13px; color: var(--muted); }
+.fp-tache { font-size: 14px; margin-bottom: 4px; }
+.fp-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.fp-table th, .fp-table td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--bord); }
+.fp-table th.num, .fp-table td.num { text-align: right; }
+.fp-table tr.nous td { background: var(--vert-fond); font-weight: 700; }
+.fp-livrables { margin-top: 6px; }
+.fp-budget { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 720px) { .fp-budget { grid-template-columns: 1fr 1fr; } }
 
 /* Formulaires */
 label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin: 12px 0 5px; }

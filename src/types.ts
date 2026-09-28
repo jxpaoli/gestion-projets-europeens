@@ -203,3 +203,36 @@ export interface DocumentProjet {
   modifie_le: string | null;
   present: boolean;
 }
+// Fiche projet : synthèse du dernier formulaire de candidature (contenu décrit dans la migration fiches_projet).
+export interface SectionFiche { titre: string; page?: number | null; texte?: string | null }
+export interface ContenuFiche {
+  recap: {
+    titre?: string; titre_origine?: string; chef_de_file?: string; priorite?: string; objectif_specifique?: string;
+    duree?: string; dates?: string; budget_total?: number; feder_total?: number; taux_feder?: number;
+    resume?: string; notre_role?: string; notre_budget?: number; notre_feder?: number; a_retenir?: string[];
+  };
+  partenaires?: { code?: string; nom: string; pays?: string; budget?: number; feder?: number; nous?: boolean }[];
+  commune?: SectionFiche[];
+  lots?: {
+    code: string; titre?: string; page?: number | null; resume?: string | null;
+    activites?: { code: string; titre?: string; page?: number | null; texte?: string | null; nous?: boolean; notre_tache?: string | null }[];
+    livrables?: { code: string; titre?: string; periode?: string | null; nous?: boolean; role?: string | null }[];
+  }[];
+  notre_partie?: SectionFiche[];
+  budget?: { page?: number | null; categories?: { libelle: string; montant: number }[]; periodes?: { periode: string; montant: number }[] };
+  ecarts?: { titre: string; texte?: string | null; source?: string | null }[];
+}
+export interface FicheProjet {
+  id: string;
+  projet_id: string;
+  version: number;
+  date_export: string | null;
+  langue_origine: string | null;
+  partenaire: string | null;
+  document_id: string | null;
+  document_nom: string | null;
+  contenu: ContenuFiche;
+  modifie_par_admin: boolean;
+  ajoute_par: string | null;
+  updated_at: string;
+}

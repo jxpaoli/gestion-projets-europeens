@@ -22,6 +22,12 @@
 # dans sa messagerie à partir de l'objet). La base refuse une source mail sans date, expéditeur ou objet.
 #   Commenter-Action -Id <uuid> -Message "Relance faite (mail du 25/09)"
 #   Fin-Passage -Id $p.id -MailsLus 42 -Creees 3 -Faites 2 -Rouvertes 0 -Commentaires 1
+#   Get-FichesProjet -Projet EASY2LOG
+#   Deposer-FicheProjet -Projet EASY2LOG -Version 4.0 -Pdf "IF Marittimo00156_V4.0_EASY2LOG.pdf" -Json C:\...iche.json `
+#                       -DateExport 2025-11-30 -Langue it -Partenaire "PP8 CCI de Corse (repris par l'EPCI de Corse)"
+# Fiche projet = synthèse en français du dernier formulaire de candidature (forme du JSON : consigne du secrétaire
+# et migration 202609280002_fiches_projet.sql). La base refuse une version pas plus récente, un PDF absent,
+# et toute modification d'une fiche relue par Joseph.
 param([string]$Fichier = "C:\Users\jxpao\Claude\Projects\secretaire-mails\.env.europa.local")
 
 $ErrorActionPreference = "Stop"
@@ -51,8 +57,10 @@ function Api([string]$Methode, [string]$Chemin, $Corps = $null) {
   }
   $params = @{ UseBasicParsing = $true; Method = $Methode; Uri = "$($script:cfg.EUROPA_URL)/rest/v1/$Chemin"; Headers = $h }
   if ($null -ne $Corps) {
+    # Un texte est envoyé tel quel (JSON déjà prêt, ex. contenu d'une fiche projet).
+    $json = if ($Corps -is [string]) { $Corps } else { $Corps | ConvertTo-Json -Depth 5 -Compress }
     $params.ContentType = "application/json; charset=utf-8"
-    $params.Body = [Text.Encoding]::UTF8.GetBytes(($Corps | ConvertTo-Json -Depth 5 -Compress))
+    $params.Body = [Text.Encoding]::UTF8.GetBytes($json)
   }
   try {
     $r = Invoke-WebRequest @params
@@ -177,4 +185,34 @@ function Fin-Passage([Parameter(Mandatory)][long]$Id, [int]$MailsLus, [int]$Cree
               actions_faites = $Faites; actions_rouvertes = $Rouvertes; commentaires = $Commentaires }
   if ($Notes) { $corps.notes = $Notes }
   (Api PATCH "passages_secretaire?id=eq.$Id" $corps)[0]
+}
+
+# Fiches projet : versions en base, la plus récente d'abord.
+function Get-FichesProjet([Parameter(Mandatory)][string]$Projet) {
+  Api GET "fiches_projet?select=id,version,date_export,document_nom,modifie_par_admin,ajoute_par,updated_at&projet_id=eq.$(Id-Projet $Projet)&order=version.desc"
+}
+
+# Dépose (ou remplace, si même version non relue par Joseph) la fiche d'un projet. -Json : fichier UTF-8 du contenu.
+function Deposer-FicheProjet {
+  param([Parameter(Mandatory)][string]$Projet, [Parameter(Mandatory)][decimal]$Version, [Parameter(Mandatory)][string]$Pdf,
+        [Parameter(Mandatory)][string]$Json, [string]$DateExport, [string]$Langue = 'it', [string]$Partenaire)
+  $projetId = Id-Projet $Projet
+  $doc = Api GET "documents?select=id,nom&projet_id=eq.$projetId&present=eq.true&nom=eq.$([uri]::EscapeDataString($Pdf))"
+  if (-not $doc) { throw "PDF introuvable dans l'index des documents : $Pdf (lancer indexer-documents.ps1 s'il vient d'être ajouté)" }
+  $contenu = [IO.File]::ReadAllText((Resolve-Path $Json), [Text.Encoding]::UTF8).Trim([char]0xFEFF).Trim()
+  $null = $contenu | ConvertFrom-Json   # erreur ici si le JSON est invalide
+  $champs = @{ document_id = $doc[0].id; document_nom = $doc[0].nom; langue_origine = $Langue }
+  if ($DateExport) { $champs.date_export = $DateExport }
+  if ($Partenaire) { $champs.partenaire = $Partenaire }
+  $v = $Version.ToString([Globalization.CultureInfo]::InvariantCulture)
+  $existante = Api GET "fiches_projet?select=id,modifie_par_admin&projet_id=eq.$projetId&version=eq.$v"
+  if ($existante) {
+    if ($existante[0].modifie_par_admin) { throw "Fiche $Projet V$v relue par Joseph : ne pas la modifier." }
+    $corps = ($champs | ConvertTo-Json -Compress).TrimEnd('}') + ',"contenu":' + $contenu + '}'
+    (Api PATCH "fiches_projet?id=eq.$($existante[0].id)" $corps)[0] | Select-Object id, version, updated_at
+  } else {
+    $champs.projet_id = $projetId
+    $corps = ($champs | ConvertTo-Json -Compress).TrimEnd('}') + ',"version":' + $v + ',"contenu":' + $contenu + '}'
+    (Api POST "fiches_projet" $corps)[0] | Select-Object id, version, updated_at
+  }
 }

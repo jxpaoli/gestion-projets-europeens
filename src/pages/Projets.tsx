@@ -1,5 +1,6 @@
 import { useDonnees } from "../donnees";
 import { aujourdhui, date, montant } from "../format";
+import { Link } from "react-router-dom";
 import { LienDoc } from "../composants";
 
 export default function Projets() {
@@ -28,7 +29,10 @@ export default function Projets() {
                 <dt>Budget EPCI</dt><dd className="num">{montant(p.budget_epci)}</dd>
                 <dt>Prochain CdP</dt><dd>{cdp ? `${date(cdp.date)}${cdp.lieu ? ` – ${cdp.lieu}` : ""}` : "—"}</dd>
               </dl>
-              {p.dossier_onedrive && <div style={{ marginTop: 10 }}><LienDoc href={p.dossier_onedrive}>Dossier OneDrive du projet</LienDoc></div>}
+              <div className="projet-liens">
+                <Link to={`/projets/${p.id}/fiche`} className="btn">📋 Fiche projet</Link>
+                {p.dossier_onedrive && <LienDoc href={p.dossier_onedrive}>Dossier OneDrive du projet</LienDoc>}
+              </div>
             </div>
           );
         })}

@@ -13,6 +13,7 @@ import Actions from "./pages/Actions";
 import Finances from "./pages/Finances";
 import Livrables from "./pages/Livrables";
 import Projets from "./pages/Projets";
+import FicheProjet from "./pages/FicheProjet";
 import Documents from "./pages/Documents";
 import Reunions from "./pages/Reunions";
 import FicheReunion from "./pages/FicheReunion";
@@ -63,7 +64,7 @@ function Layout({ role }: { role: Role }) {
         <NavLink to="/documents"><Icon name="folder" size={21} />Docs</NavLink>
         {ecranLarge
           ? <NavLink to="/projets"><Icon name="card" size={21} />Projets</NavLink>
-          : <NavLink to="/plus" className={({ isActive }) => (isActive || ["/finances", "/livrables", "/projets"].includes(pathname) ? "active" : "")}><Icon name="gear" size={21} />Plus</NavLink>}
+          : <NavLink to="/plus" className={({ isActive }) => (isActive || (["/finances", "/livrables", "/projets"].includes(pathname) || pathname.startsWith("/projets/")) ? "active" : "")}><Icon name="gear" size={21} />Plus</NavLink>}
       </nav>
     </div>
   );
@@ -95,6 +96,7 @@ function AuthedApp() {
           <Route path="finances" element={<Finances />} />
           <Route path="livrables" element={<Livrables />} />
           <Route path="projets" element={<Projets />} />
+          <Route path="projets/:id/fiche" element={<FicheProjet />} />
           <Route path="documents" element={<Documents />} />
           <Route path="reunions" element={<Reunions />} />
           <Route path="reunions/:id" element={<FicheReunion />} />

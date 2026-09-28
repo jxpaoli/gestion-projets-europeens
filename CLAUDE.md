@@ -36,6 +36,10 @@ le 25/09/2026 : code, schéma, Edge Function, Worker).
 - Sources (`gestion_projets.sources`, 28/09/2026) : plusieurs par élément (action, échéance, livrable, période,
   point, info) ; mail = date + expéditeur + objet (pas d'accès à la messagerie, l'objet sert à le retrouver),
   document, réunion ou autre. Composant commun `src/Sources.tsx`.
+- Fiches projet (`gestion_projets.fiches_projet`, 28/09/2026) : synthèse FR du dernier formulaire de candidature,
+  une ligne par version, rédigée par le **secrétaire** (`Deposer-FicheProjet`, consigne : section « Fiches projet » de `Projectssecretaire-mailsCLAUDE.md`) ;
+  écran `/projets/:id/fiche` (récap, partie commune, lots avec nos activités surlignées, notre partie).
+  Lecture : tous les membres ; une fiche modifiée par Joseph devient intouchable pour le secrétaire.
 
 ## Scripts (PowerShell 5.1 : enregistrer en UTF-8 **avec BOM**)
 - `scripts/sql.ps1 -File x.sql | -Query "…" [-ReadOnly]` : SQL via l'API Management (jeton admin).
