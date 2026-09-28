@@ -37,7 +37,7 @@ le 25/09/2026 : code, schéma, Edge Function, Worker).
   point, info) ; mail = date + expéditeur + objet (pas d'accès à la messagerie, l'objet sert à le retrouver),
   document, réunion ou autre. Composant commun `src/Sources.tsx`.
 - Fiches projet (`gestion_projets.fiches_projet`, 28/09/2026) : synthèse FR du dernier formulaire de candidature,
-  une ligne par version, rédigée par le **secrétaire** (`Deposer-FicheProjet`, consigne : section « Fiches projet » de `Projectssecretaire-mailsCLAUDE.md`) ;
+  une ligne par version, rédigée par le **secrétaire** (`Deposer-FicheProjet`, consigne : section « Fiches projet » de `Projects\secretaire-mails\CLAUDE.md` ; toute session peut la suivre avec le compte du secrétaire) ;
   écran `/projets/:id/fiche` (récap, partie commune, lots avec nos activités surlignées, notre partie).
   Lecture : tous les membres ; une fiche modifiée par Joseph devient intouchable pour le secrétaire.
 
