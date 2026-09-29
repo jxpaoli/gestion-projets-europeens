@@ -10,6 +10,7 @@ import Livrables from "./Livrables";
 import Finances from "./Finances";
 import Documents from "./Documents";
 import FicheProjet from "./FicheProjet";
+import RepriseFormulaire from "../RepriseFormulaire";
 
 const ONGLETS = [
   { code: "", libelle: "Aperçu" },
@@ -171,6 +172,7 @@ function Apercu({ projetId, voir }: { projetId: string; voir: (code: string) => 
               <button className="btn" onClick={() => voir("fiche")}>📋 Fiche projet</button>
               {p.dossier_onedrive && <LienDoc href={p.dossier_onedrive}>Dossier OneDrive du projet</LienDoc>}
             </div>
+            {estAdmin && <RepriseFormulaire projet={p} />}
           </div>
         </div>
       </div>
