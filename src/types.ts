@@ -38,6 +38,7 @@ export interface Action {
   valide_par: "admin" | "secretaire" | null;
   valide_le: string | null;
   valide_source: string | null;
+  derniere_source_date: string | null;
   mail_ref: string | null;
   echeance_id: string | null;
   updated_at: string;

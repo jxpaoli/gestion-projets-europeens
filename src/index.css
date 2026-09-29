@@ -378,6 +378,11 @@ ol.odj { margin: 0; padding-left: 22px; display: flex; flex-direction: column; g
 .feuille table.tab th, .feuille table.tab td { border-bottom: 1px solid #e1e6ef; padding: 5px 6px; text-align: left; vertical-align: top; }
 .feuille table.tab th { background: #eef1f5; }
 .feuille td.alerte { color: #c62f2f; font-weight: 800; }
+.mois-rapport { display: grid; grid-template-columns: 110px 1fr; gap: 8px; margin: 3px 0; break-inside: avoid; }
+.mois-rapport .mois-lib { font-weight: 700; color: #0e3052; text-transform: capitalize; }
+.feuille ul.compact { font-size: 12.5px; columns: 2; column-gap: 24px; }
+.feuille ul.compact li { break-inside: avoid; }
+@media (max-width: 640px) { .feuille ul.compact { columns: 1; } .mois-rapport { grid-template-columns: 1fr; gap: 0; } }
 .feuille-pied { margin-top: 24px; font-size: 11px; color: #5d6a80; border-top: 1px solid #e1e6ef; padding-top: 6px; }
 @media print {
   body { background: #fff; }

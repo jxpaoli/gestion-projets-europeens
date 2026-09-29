@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Donnees } from "./donnees";
+import type { Action, Source } from "./types";
 import { aujourdhui } from "./format";
 
 // Anneau de progression. valeur entre 0 et 1 (null = pas de donnée) ; le centre affiche un texte libre.
@@ -128,4 +129,26 @@ export function Anneaux({ ind, compact }: { ind: Indicateurs; compact?: boolean 
     }
   }
   return <div className={`anneaux${compact ? " compact" : ""}`}>{anneaux}</div>;
+}
+
+// Date réelle de réalisation d'une action faite : le mail le plus récent qui s'y rattache (le suivi des mails
+// remonte avant l'appli), sans dépasser la date de coche ; à défaut, la date de coche.
+export function dateRealisation(a: Action, sources: Source[]): string | null {
+  if (a.statut !== "fait") return null;
+  const coche = (a.valide_le ?? a.derniere_source_date ?? a.updated_at)?.slice(0, 10) ?? null;
+  const mails = sources.filter((s) => s.action_id === a.id && s.type === "mail" && s.date_source && (!coche || s.date_source <= coche))
+    .map((s) => s.date_source!).sort();
+  return mails[mails.length - 1] ?? coche;
+}
+
+// Début d'un projet : date saisie, sinon la plus ancienne trace (réunion, mail relié) ; estime = pas de date saisie.
+export function debutProjet(d: Donnees, projetId: string): { date: string | null; estime: boolean } {
+  const p = d.projets.find((x) => x.id === projetId);
+  if (p?.date_debut) return { date: p.date_debut, estime: false };
+  const ids = new Set([...d.actions, ...d.echeances].filter((x) => x.projet_id === projetId).map((x) => x.id));
+  const dates = [
+    ...d.echeances.filter((e) => e.projet_id === projetId && e.statut !== "annule").map((e) => e.date),
+    ...d.sources.filter((s) => s.date_source && ((s.action_id && ids.has(s.action_id)) || (s.echeance_id && ids.has(s.echeance_id)))).map((s) => s.date_source!),
+  ].sort();
+  return { date: dates[0] ?? null, estime: true };
 }

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { useDonnees } from "./donnees";
+import { dateRealisation } from "./indicateurs";
 import { date, jourMois } from "./format";
 import type { Action, Evenement, Projet } from "./types";
 
@@ -52,8 +53,9 @@ export function BadgesTicket({ a }: { a: Action }) {
   const rouv = donnees ? derniereRouverture(a, donnees.evenements) : null;
   if (rouv) return <span className="badge rouge" title={rouv.source ?? ""}>🔄 Rouverte par {libQui(rouv.qui_role)}</span>;
   if (a.statut === "fait" && a.valide_par) {
+    const fait = donnees ? dateRealisation(a, donnees.sources) : a.valide_le;
     return <span className={`badge ${a.valide_par === "secretaire" ? "bleu" : "vert"}`} title={a.valide_source ?? ""}>
-      ✓ validé par {libQui(a.valide_par)}{a.valide_le ? ` · ${date(a.valide_le)}` : ""}
+      ✓ validé par {libQui(a.valide_par)}{fait ? ` · fait le ${date(fait)}` : ""}
     </span>;
   }
   if (a.origine === "secretaire" && !a.modifie_par_admin) return <span className="badge bleu">✉ proposé par le secrétaire</span>;
