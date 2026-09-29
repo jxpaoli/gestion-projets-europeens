@@ -8,9 +8,10 @@ import { estReunion, heure } from "../reunions";
 import { BoutonSources } from "../Sources";
 
 // Liste des réunions : à venir en premier ; les passées sur demande.
-export default function Reunions() {
+export default function Reunions({ projetId }: { projetId?: string }) {
   const { donnees, projet } = useDonnees();
-  const [filtre, setFiltre] = usePreference("reunions.projet", "");
+  const [choix, setFiltre] = usePreference("reunions.projet", "");
+  const filtre = projetId ?? choix;
   const [voirPassees, setVoirPassees] = useState(false);
   if (!donnees) return null;
   const auj = aujourdhui();
@@ -43,8 +44,8 @@ export default function Reunions() {
 
   return (
     <>
-      <div className="titre">Réunions</div>
-      <FiltreProjets projets={donnees.projets.filter((p) => p.actif)} valeur={filtre} onChange={setFiltre} />
+      {!projetId && <div className="titre">Réunions</div>}
+      {!projetId && <FiltreProjets projets={donnees.projets.filter((p) => p.actif)} valeur={filtre} onChange={setFiltre} />}
       <div className="sec">À venir ({aVenir.length})</div>
       {aVenir.length ? <div className="liste">{aVenir.map(carte)}</div> : <div className="vide">Aucune réunion prévue.</div>}
       <div className="sec">Passées ({passees.length})</div>

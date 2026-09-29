@@ -14,6 +14,7 @@ import Finances from "./pages/Finances";
 import Livrables from "./pages/Livrables";
 import Projets from "./pages/Projets";
 import FicheProjet from "./pages/FicheProjet";
+import EspaceProjet from "./pages/EspaceProjet";
 import Documents from "./pages/Documents";
 import Reunions from "./pages/Reunions";
 import FicheReunion from "./pages/FicheReunion";
@@ -96,6 +97,7 @@ function AuthedApp() {
           <Route path="finances" element={<Finances />} />
           <Route path="livrables" element={<Livrables />} />
           <Route path="projets" element={<Projets />} />
+          <Route path="projets/:id" element={<EspaceProjet />} />
           <Route path="projets/:id/fiche" element={<FicheProjet />} />
           <Route path="documents" element={<Documents />} />
           <Route path="reunions" element={<Reunions />} />

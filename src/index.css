@@ -302,6 +302,17 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); ou
 .cockpit-projets .anneaux { box-shadow: none; border: 0; padding: 0; }
 .cockpit-colonnes { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; align-items: start; }
 .app-main.large { max-width: 1400px; }
+a.tuile-projet { color: var(--txt); text-decoration: none; transition: border-color .15s, transform .15s; }
+a.tuile-projet:hover { border-color: var(--accent); transform: translateY(-1px); }
+
+/* Espace projet */
+.ep-tete { border-left: 5px solid var(--marine); padding-left: 10px; margin: 8px 0 10px; }
+.ep-tete .titre { margin: 0 0 2px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ep-onglets { margin-bottom: 12px; }
+.ep-colonnes { display: grid; grid-template-columns: 1fr; gap: 0 16px; }
+@media (min-width: 900px) { .ep-colonnes { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } }
+.lien-projet { color: inherit; text-decoration: none; }
+.lien-projet:hover { color: var(--accent); }
 
 /* Documents */
 .recherche { margin-bottom: 10px; border-radius: 999px; padding-left: 16px; }

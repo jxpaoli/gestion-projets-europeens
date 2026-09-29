@@ -17,16 +17,16 @@ function niveau(taux: number | null) {
   return "";
 }
 
-export default function Finances() {
+export default function Finances({ projetId }: { projetId?: string }) {
   const { donnees } = useDonnees();
   if (!donnees) return null;
   const auj = aujourdhui();
 
   return (
     <>
-      <div className="titre">Finances – part EPCI de Corse</div>
+      {!projetId && <div className="titre">Finances – part EPCI de Corse</div>}
       <div className="liste">
-        {donnees.projets.filter((p) => p.actif).map((p) => {
+        {donnees.projets.filter((p) => (projetId ? p.id === projetId : p.actif)).map((p) => {
           const ps = donnees.periodes.filter((x) => x.projet_id === p.id);
           const echues = ps.filter((x) => x.date_fin && x.date_fin < auj);
           const prevuEchu = somme(echues, "prevu");

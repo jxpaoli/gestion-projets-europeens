@@ -33,7 +33,7 @@ export default function Cockpit() {
           const ind = calculer(donnees, p.id);
           const conso = ind.budget ? (ind.declare ?? 0) / ind.budget : null;
           return (
-            <div className="card" key={p.id}>
+            <Link to={`/projets/${p.id}`} className="card tuile-projet" key={p.id} title={`Ouvrir ${p.acronyme}`}>
               <h3><PastilleProjet projet={p} />{p.titre ? <span className="muted" style={{ fontWeight: 600, fontSize: 12.5 }}>{p.titre.slice(0, 50)}</span> : null}</h3>
               <div className="anneaux">
                 <Anneau taille={64} valeur={ind.ouvertes ? ind.retards / ind.ouvertes : 0} centre={String(ind.retards)} libelle="En retard" ton={ind.retards ? "rouge" : "vert"} />
@@ -42,7 +42,7 @@ export default function Cockpit() {
                 <Anneau taille={64} valeur={ind.tempsEcoule} centre={ind.tempsEcoule == null ? "—" : `${Math.round(ind.tempsEcoule * 100)}%`} libelle="Temps" ton="neutre" />
                 <Anneau taille={64} valeur={conso} centre={conso == null ? "—" : `${Math.round(conso * 100)}%`} libelle="Budget" ton="bleu" />
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>

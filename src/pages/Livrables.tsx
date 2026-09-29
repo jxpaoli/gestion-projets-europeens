@@ -8,17 +8,18 @@ import { documentDuLivrable, lienFichier } from "../onedrive";
 
 const ORDRE: StatutLivrable[] = ["a_faire", "en_cours", "envoye", "approuve"];
 
-export default function Livrables() {
+export default function Livrables({ projetId }: { projetId?: string }) {
   const { donnees, projet } = useDonnees();
-  const [filtre, setFiltre] = useState("");
+  const [choix, setFiltre] = useState("");
+  const filtre = projetId ?? choix;
   if (!donnees) return null;
   const auj = aujourdhui();
   const selection = donnees.livrables.filter((v) => !filtre || v.projet_id === filtre);
 
   return (
     <>
-      <div className="titre">Livrables</div>
-      <FiltreProjets projets={donnees.projets.filter((p) => p.actif)} valeur={filtre} onChange={setFiltre} />
+      {!projetId && <div className="titre">Livrables</div>}
+      {!projetId && <FiltreProjets projets={donnees.projets.filter((p) => p.actif)} valeur={filtre} onChange={setFiltre} />}
       <div className="kpis" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
         {ORDRE.map((s) => (
           <div className="kpi" key={s}><b>{selection.filter((v) => v.statut === s).length}</b><span>{LIB_STATUT_LIVRABLE[s]}</span></div>

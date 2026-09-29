@@ -5,9 +5,11 @@ import { BadgesTicket, BlocDate, CaseFait, FiltreProjets, PastilleProjet } from 
 import { BoutonSources } from "../Sources";
 import type { Action } from "../types";
 
-export default function Actions() {
+// projetId : intégré à l'espace projet (filtre imposé, sans titre ni choix du projet).
+export default function Actions({ projetId }: { projetId?: string }) {
   const { donnees, projet, estAdmin, cocherAction, setEditer } = useDonnees();
-  const [filtre, setFiltre] = useState("");
+  const [choix, setFiltre] = useState("");
+  const filtre = projetId ?? choix;
   const [responsable, setResponsable] = useState("");
   const [voirFaites, setVoirFaites] = useState(false);
   // Une action cochée reste visible à sa place jusqu'au prochain changement d'écran : on peut la décocher.
@@ -56,8 +58,8 @@ export default function Actions() {
 
   return (
     <>
-      <div className="titre">Actions</div>
-      <FiltreProjets projets={donnees.projets.filter((p) => p.actif)} valeur={filtre} onChange={setFiltre} />
+      {!projetId && <div className="titre">Actions</div>}
+      {!projetId && <FiltreProjets projets={donnees.projets.filter((p) => p.actif)} valeur={filtre} onChange={setFiltre} />}
       <div className="filtres">
         <select value={responsable} onChange={(e) => setResponsable(e.target.value)} aria-label="Responsable">
           <option value="">Tous les responsables</option>

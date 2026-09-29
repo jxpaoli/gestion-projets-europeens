@@ -5,7 +5,7 @@ export default function Plus() {
   const liens = [
     { to: "/finances", icone: "💶", titre: "Finances", sous: "Prévu, déclaré, certifié, payé par période" },
     { to: "/livrables", icone: "📦", titre: "Livrables", sous: "État et échéances des livrables" },
-    { to: "/projets", icone: "🪪", titre: "Projets", sous: "Carte d’identité des projets" },
+    { to: "/projets", icone: "🪪", titre: "Projets", sous: "Ouvrir un projet : actions, réunions, livrables, finances, docs" },
     { to: "/rapport", icone: "🖨️", titre: "Rapport direction", sous: "Point d’avancement à imprimer ou envoyer en PDF" },
   ];
   return (

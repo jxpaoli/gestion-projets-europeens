@@ -16,7 +16,7 @@ export default function Projets() {
           const cdp = donnees.echeances.find((e) => e.projet_id === p.id && e.type === "cdp" && e.statut === "prevu" && e.date >= auj);
           return (
             <div className="card projet-carte" key={p.id} style={{ borderLeftColor: p.couleur || undefined }}>
-              <h3>{p.acronyme}</h3>
+              <h3><Link to={`/projets/${p.id}`} className="lien-projet">{p.acronyme} ›</Link></h3>
               {p.titre && <div className="titre-long">{p.titre}</div>}
               <dl>
                 <dt>Programme</dt><dd>{p.programme ?? "—"}{p.appel ? ` · ${p.appel}` : ""}</dd>
@@ -30,7 +30,8 @@ export default function Projets() {
                 <dt>Prochain CdP</dt><dd>{cdp ? `${date(cdp.date)}${cdp.lieu ? ` – ${cdp.lieu}` : ""}` : "—"}</dd>
               </dl>
               <div className="projet-liens">
-                <Link to={`/projets/${p.id}/fiche`} className="btn">📋 Fiche projet</Link>
+                <Link to={`/projets/${p.id}`} className="btn plein" style={{ textDecoration: "none" }}>Ouvrir le projet</Link>
+                <Link to={`/projets/${p.id}?vue=fiche`} className="btn" style={{ textDecoration: "none" }}>📋 Fiche projet</Link>
                 {p.dossier_onedrive && <LienDoc href={p.dossier_onedrive}>Dossier OneDrive du projet</LienDoc>}
               </div>
             </div>

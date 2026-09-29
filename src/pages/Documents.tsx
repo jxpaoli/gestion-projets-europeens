@@ -34,9 +34,10 @@ function taille(o: number | null) {
 // Recherche tolérante : sans accents, sans casse, tous les mots doivent apparaître.
 const normaliser = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
-export default function Documents() {
+export default function Documents({ projetId }: { projetId?: string }) {
   const { donnees, projet, estAdmin } = useDonnees();
-  const [filtre, setFiltre] = usePreference("docs.projet", "");
+  const [choix, setFiltre] = usePreference("docs.projet", "");
+  const filtre = projetId ?? choix;
   const [recherche, setRecherche] = useState("");
   const base = donnees?.parametres.onedrive_base;
 
@@ -61,10 +62,10 @@ export default function Documents() {
 
   return (
     <>
-      <div className="titre">Documents</div>
+      {!projetId && <div className="titre">Documents</div>}
       <input className="recherche" type="search" value={recherche} onChange={(e) => setRecherche(e.target.value)}
         placeholder="Rechercher un document (ex. annexe 4, PV CdP, D4.1.1)" aria-label="Rechercher un document" />
-      <FiltreProjets projets={projets} valeur={filtre} onChange={setFiltre} />
+      {!projetId && <FiltreProjets projets={projets} valeur={filtre} onChange={setFiltre} />}
 
       {!recherche && (filtre ? projets.filter((p) => p.id === filtre) : projets).map((p) => (
         <div key={p.id}>

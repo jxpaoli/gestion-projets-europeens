@@ -51,7 +51,8 @@ function Partie({ titre, ouvert, children }: { titre: ReactNode; ouvert?: boolea
   );
 }
 
-export default function FicheProjet() {
+// integre : onglet « Fiche » de l'espace projet (pas de lien de retour).
+export default function FicheProjet({ integre }: { integre?: boolean }) {
   const { id } = useParams();
   const { donnees } = useDonnees();
   const [fiches, setFiches] = useState<Fiche[] | null>(null);
@@ -68,7 +69,7 @@ export default function FicheProjet() {
   if (erreur) return <div className="vide">Chargement impossible : {erreur}</div>;
   if (!fiches) return <div className="vide">Chargement…</div>;
 
-  const retour = <Link to="/projets" className="btn-lien">← Projets</Link>;
+  const retour = integre ? null : <Link to={`/projets/${projet.id}`} className="btn-lien">← {projet.acronyme}</Link>;
   if (!fiches.length) {
     return (
       <>
