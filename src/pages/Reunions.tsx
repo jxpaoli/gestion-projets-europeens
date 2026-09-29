@@ -33,6 +33,7 @@ export default function Reunions() {
             {(e.lieu_nom || e.lieu) && <span>📍 {e.lieu_nom || e.lieu}</span>}
             {nbActions > 0 && <span className="badge orange">{nbActions} à faire</span>}
             {avecFiche.has(e.id) && <span className="badge vert">fiche</span>}
+            {e.origine === "secretaire" && !e.modifie_par_admin && <span className="badge bleu">✉ ajoutée par le secrétaire</span>}
             <BoutonSources cible={{ champ: "echeance_id", id: e.id, titre: e.libelle, projetId: e.projet_id }} />
           </div>
         </div>

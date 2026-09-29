@@ -101,6 +101,8 @@ export interface Echeance {
   adresse: string | null;
   format: "presentiel" | "hybride" | "distanciel" | "ecrit" | null;
   lien_visio: string | null;
+  origine: "admin" | "secretaire" | "import";
+  modifie_par_admin: boolean;
 }
 
 export type CategorieInfo = "transport" | "hebergement" | "repas" | "contact" | "acces" | "autre";

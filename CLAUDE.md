@@ -25,7 +25,8 @@ le 25/09/2026 : code, schéma, Edge Function, Worker).
   l'erreur finale « RESULTATS »).
 - Rôles (`roles_appli`) : `admin` (Joseph), `lecteur` (direction, CDINNOV), `secretaire` (session
   Claude `secretaire-mails`, règles appliquées par triggers : sources mail, pas de doublon,
-  jamais modifier une action de Joseph, réouverture seulement sur mail plus récent).
+  jamais modifier une action de Joseph, réouverture seulement sur mail plus récent ; depuis le 29/09/2026 il crée
+  les réunions annoncées par mail, `Nouvelle-Reunion`, sans doublon, jamais d'annulation).
 - Dépôt : `github.com/jxpaoli/gestion-projets-europeens` (ex `boutique-ASC`, renommé le 25/09/2026) ;
   dossier local `C:\Users\jxpao\Claude\Projects\gestion-projets-europeens`.
 - Déploiement : push sur `main` → GitHub Actions → Worker Cloudflare `gestion-projets-europeens`

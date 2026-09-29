@@ -22,6 +22,9 @@
 # dans sa messagerie à partir de l'objet). La base refuse une source mail sans date, expéditeur ou objet.
 #   Commenter-Action -Id <uuid> -Message "Relance faite (mail du 25/09)"
 #   Fin-Passage -Id $p.id -MailsLus 42 -Creees 3 -Faites 2 -Rouvertes 0 -Commentaires 1
+#   $r = Nouvelle-Reunion -Projet "BLUE HUB" -Type cdp -Libelle "CdP n°4 – Portoferraio" -Date 2026-10-21 -LieuNom "Portoferraio" `
+#                         -MailRef "VERSE-<unid>" -DateSource 2026-09-25 -Expediteur "X" -Objet "…" -Numero 312 [-HeureDebut 09:30 -Format presentiel]
+#   Maj-Reunion -Id $r.id -HeureDebut 10:00 -Adresse "…"     (seulement ses propres réunions, jamais touchées par Joseph)
 #   Get-Evolutions -Projet EASY2LOG
 #   $e = Nouvelle-Evolution -Projet EASY2LOG -Date 2026-06-12 -Type retard -Element D1.3.1 -Titre "Rapport de cartographie repoussé" `
 #                           -Avant "P3" -Apres "P4" -Motif "…" -Statut valide_cdp
@@ -265,4 +268,36 @@ function Ajouter-SourceDocument {
   $existe = Api GET "sources?select=id&$champ=eq.$Id&document_id=eq.$($doc[0].id)"
   if ($existe) { Write-Host "Document déjà cité sur cet élément : ignoré."; return }
   (Api POST "sources" @{ $champ = $Id; type = 'document'; document_id = $doc[0].id; objet = $doc[0].nom })[0]
+}
+
+# Réunions (CdP, événements) annoncées par mail : création avec la source du mail ; pas de doublon (même projet,
+# type et date) ; jamais d'annulation ni de suppression (Joseph).
+function Nouvelle-Reunion {
+  param([Parameter(Mandatory)][string]$Projet, [Parameter(Mandatory)][ValidateSet('cdp', 'evenement')][string]$Type,
+        [Parameter(Mandatory)][string]$Libelle, [Parameter(Mandatory)][string]$Date,
+        [Parameter(Mandatory)][string]$MailRef, [Parameter(Mandatory)][string]$DateSource,
+        [Parameter(Mandatory)][string]$Expediteur, [Parameter(Mandatory)][string]$Objet, [int]$Numero,
+        [string]$HeureDebut, [string]$HeureFin, [string]$LieuNom, [string]$Adresse,
+        [ValidateSet('presentiel', 'hybride', 'distanciel', 'ecrit')][string]$Format, [string]$LienVisio, [string]$Notes)
+  $projetId = Id-Projet $Projet
+  $deja = Api GET "echeances?select=id,libelle,date&projet_id=eq.$projetId&type=eq.$Type&date=eq.$Date&statut=neq.annule"
+  if ($deja) { Write-Host "Réunion déjà dans l'appli : $($deja[0].libelle) ($Date)"; return $deja[0] }
+  $corps = @{ projet_id = $projetId; type = $Type; libelle = $Libelle; date = $Date; mail_ref = $MailRef }
+  $champs = @{ HeureDebut = 'heure_debut'; HeureFin = 'heure_fin'; LieuNom = 'lieu_nom'; Adresse = 'adresse'; Format = 'format'; LienVisio = 'lien_visio'; Notes = 'notes' }
+  foreach ($k in $champs.Keys) { $v = Get-Variable $k -ValueOnly; if ($v) { $corps[$champs[$k]] = $v } }
+  $r = (Api POST "echeances" $corps)[0]
+  $null = Ajouter-Source -Cible reunion -Id $r.id -DateSource $DateSource -Expediteur $Expediteur -Objet $Objet -MailRef $MailRef -Numero $Numero
+  $r
+}
+
+function Maj-Reunion {
+  param([Parameter(Mandatory)][string]$Id, [string]$Libelle, [string]$Date, [string]$HeureDebut, [string]$HeureFin,
+        [string]$LieuNom, [string]$Adresse, [ValidateSet('presentiel', 'hybride', 'distanciel', 'ecrit')][string]$Format,
+        [string]$LienVisio, [string]$Notes)
+  $corps = @{}
+  $champs = @{ Libelle = 'libelle'; Date = 'date'; HeureDebut = 'heure_debut'; HeureFin = 'heure_fin'; LieuNom = 'lieu_nom'
+               Adresse = 'adresse'; Format = 'format'; LienVisio = 'lien_visio'; Notes = 'notes' }
+  foreach ($k in $champs.Keys) { $v = Get-Variable $k -ValueOnly; if ($v) { $corps[$champs[$k]] = $v } }
+  if (-not $corps.Count) { throw "Rien à modifier" }
+  (Api PATCH "echeances?id=eq.$Id" $corps)[0]
 }
