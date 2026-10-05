@@ -28,6 +28,7 @@
 #   Get-Evolutions -Projet EASY2LOG
 #   $e = Nouvelle-Evolution -Projet EASY2LOG -Date 2026-06-12 -Type retard -Element D1.3.1 -Titre "Rapport de cartographie repoussé" `
 #                           -Avant "P3" -Apres "P4" -Motif "…" -Statut valide_cdp
+#   (évolution qui ne vise qu'un autre partenaire : ajouter -AutrePartenaire ; correction : Maj-Evolution -Id … -ConcerneEpci $false)
 #   Maj-Evolution -Id $e.id -Statut approuve        (jamais sur une entrée de Joseph ; jamais « abandonne »)
 #   Ajouter-SourceDocument -Cible evolution -Id $e.id -Document "PV_CdP3.pdf"     (document indexé du projet)
 #   Get-FichesProjet -Projet EASY2LOG
@@ -236,7 +237,8 @@ function Nouvelle-Evolution {
   param([Parameter(Mandatory)][string]$Projet, [Parameter(Mandatory)][string]$Date,
         [Parameter(Mandatory)][ValidateSet('retard', 'calendrier', 'budget', 'activite', 'livrable', 'partenariat', 'decision', 'autre')][string]$Type,
         [Parameter(Mandatory)][string]$Titre, [string]$Element, [string]$Avant, [string]$Apres, [string]$Motif,
-        [ValidateSet('constate', 'propose', 'valide_cdp', 'approuve', 'integre')][string]$Statut = 'constate', [decimal]$VersionIntegree)
+        [ValidateSet('constate', 'propose', 'valide_cdp', 'approuve', 'integre')][string]$Statut = 'constate', [decimal]$VersionIntegree,
+        [switch]$AutrePartenaire)
   $projetId = Id-Projet $Projet
   # Pas de doublon : même projet, même date, même titre.
   $deja = Api GET "evolutions?select=id&projet_id=eq.$projetId&date_evolution=eq.$Date&titre=eq.$([uri]::EscapeDataString($Titre))"
@@ -244,17 +246,19 @@ function Nouvelle-Evolution {
   $corps = @{ projet_id = $projetId; date_evolution = $Date; type = $Type; titre = $Titre; statut = $Statut }
   foreach ($k in 'Element', 'Avant', 'Apres', 'Motif') { $v = Get-Variable $k -ValueOnly; if ($v) { $corps[$k.ToLower()] = $v } }
   if ($VersionIntegree) { $corps.version_integree = $VersionIntegree }
+  if ($AutrePartenaire) { $corps.concerne_epci = $false }   # visé : un autre partenaire seulement (grisé dans le rapport)
   (Api POST "evolutions" $corps)[0]
 }
 
 function Maj-Evolution {
   param([Parameter(Mandatory)][string]$Id, [ValidateSet('constate', 'propose', 'valide_cdp', 'approuve', 'integre')][string]$Statut,
-        [string]$Apres, [string]$Motif, [decimal]$VersionIntegree)
+        [string]$Apres, [string]$Motif, [decimal]$VersionIntegree, [Nullable[bool]]$ConcerneEpci)
   $corps = @{}
   if ($Statut) { $corps.statut = $Statut }
   if ($Apres) { $corps.apres = $Apres }
   if ($Motif) { $corps.motif = $Motif }
   if ($VersionIntegree) { $corps.version_integree = $VersionIntegree }
+  if ($null -ne $ConcerneEpci) { $corps.concerne_epci = [bool]$ConcerneEpci }
   (Api PATCH "evolutions?id=eq.$Id" $corps)[0]
 }
 
