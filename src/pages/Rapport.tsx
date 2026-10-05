@@ -4,6 +4,7 @@ import { useDonnees } from "../donnees";
 import { ajouterJours, aujourdhui, date, LIB_STATUT_LIVRABLE, LIB_TYPE_ECHEANCE, montant, pourcent } from "../format";
 import { calculer, dateRealisation, debutProjet } from "../indicateurs";
 import { LIB_STATUT_EVO, LIB_TYPE_EVO } from "../Evolutions";
+import { BudgetPeriodes, GanttProjets } from "../GraphiquesRapport";
 import type { Action, Periode } from "../types";
 
 const somme = (ps: Periode[], k: "prevu" | "declare" | "certifie" | "paye") => {
@@ -109,6 +110,11 @@ export default function Rapport() {
           )}
         </section>
 
+        <section>
+          <h2>Calendrier des projets</h2>
+          <GanttProjets projets={projets} periodes={donnees.periodes} />
+        </section>
+
         {projets.map((p) => {
           const depuis = depuisDe(p.id);
           const ps = donnees.periodes.filter((x) => x.projet_id === p.id);
@@ -185,6 +191,7 @@ export default function Rapport() {
               {ps.some((x) => x.prevu != null || x.declare != null) && (
                 <>
                   <h3>Finances par période (part EPCI de Corse)</h3>
+                  <BudgetPeriodes periodes={ps} couleur={p.couleur} />
                   <table className="tab">
                     <thead><tr><th>Période</th><th>Prévu</th><th>Déclaré</th><th>Certifié</th><th>Payé</th></tr></thead>
                     <tbody>{ps.map((x) => <tr key={x.id}><td>P{x.numero}</td><td>{montant(x.prevu)}</td><td>{montant(x.declare)}</td><td>{montant(x.certifie)}</td><td>{montant(x.paye)}</td></tr>)}</tbody>
