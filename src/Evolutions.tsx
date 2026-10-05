@@ -85,7 +85,7 @@ export function BadgeEvolutions({ code, evolutions, retards, onVoir }: {
 }
 
 const vide = (projetId: string): Partial<Evolution> & Pick<Evolution, "projet_id" | "titre"> => ({
-  projet_id: projetId, date_evolution: aujourdhui(), type: "retard", element: "", titre: "", avant: "", apres: "", motif: "", statut: "constate",
+  projet_id: projetId, date_evolution: aujourdhui(), type: "retard", element: "", titre: "", avant: "", apres: "", motif: "", statut: "constate", concerne_epci: true,
 });
 
 function FormEvolution({ initial, codes, onFin }: {
@@ -126,6 +126,7 @@ function FormEvolution({ initial, codes, onFin }: {
         <div><label htmlFor="evo-avant">Avant (formulaire)</label><input id="evo-avant" value={e.avant ?? ""} onChange={(x) => maj({ avant: x.target.value })} placeholder="Ex. P3" /></div>
         <div><label htmlFor="evo-apres">Après</label><input id="evo-apres" value={e.apres ?? ""} onChange={(x) => maj({ apres: x.target.value })} placeholder="Ex. P4" /></div>
       </div>
+      <label className="evo-epci"><input type="checkbox" checked={e.concerne_epci !== false} onChange={(x) => maj({ concerne_epci: x.target.checked })} /> Concerne l’EPCI de Corse (décocher si seul un autre partenaire est visé : grisé dans le rapport)</label>
       <label htmlFor="evo-motif">Motif</label>
       <textarea id="evo-motif" rows={3} value={e.motif ?? ""} onChange={(x) => maj({ motif: x.target.value })} />
       {e.statut === "integre" && (
@@ -188,11 +189,12 @@ export function JournalEvolutions({ projet, evolutions, retards, codes, filtre, 
         )}
         <div className="evo-liste">
           {liste.map((e) => (
-            <div key={e.id} className={`evo-ligne${e.statut === "abandonne" ? " abandonne" : ""}`}>
+            <div key={e.id} className={`evo-ligne${e.statut === "abandonne" ? " abandonne" : ""}${e.concerne_epci === false ? " autre-partenaire" : ""}`}>
               <div className="evo-date">{date(e.date_evolution)}</div>
               <div className="evo-corps">
                 <div className="evo-tete">
                   <span className="badge">{LIB_TYPE_EVO[e.type]}</span>
+                  {e.concerne_epci === false && <span className="badge">autre partenaire</span>}
                   {e.element && <button type="button" className="evo-code" onClick={() => setFiltre(e.element)}>{e.element}</button>}
                   <b>{e.titre}</b>
                 </div>

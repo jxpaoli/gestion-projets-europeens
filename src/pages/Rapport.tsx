@@ -163,8 +163,8 @@ export default function Rapport() {
                 <>
                   <h3>Écarts par rapport au formulaire ({evolutions.length})</h3>
                   <ul>{evolutions.map((e) => (
-                    <li key={e.id}>{LIB_TYPE_EVO[e.type].replace(/^\S+\s/, "")}{e.element ? ` ${e.element}` : ""} : {e.titre}
-                      <span className="muted"> ({LIB_STATUT_EVO[e.statut].toLowerCase()}, {date(e.date_evolution)})</span></li>
+                    <li key={e.id} className={e.concerne_epci === false ? "autre-partenaire" : undefined}>{LIB_TYPE_EVO[e.type].replace(/^\S+\s/, "")}{e.element ? ` ${e.element}` : ""} : {e.titre}
+                      <span className="muted"> ({LIB_STATUT_EVO[e.statut].toLowerCase()}, {date(e.date_evolution)}{e.concerne_epci === false ? ", autre partenaire" : ""})</span></li>
                   ))}</ul>
                 </>
               )}

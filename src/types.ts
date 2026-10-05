@@ -256,6 +256,7 @@ export interface Evolution {
   motif: string | null;
   statut: StatutEvolution;
   version_integree: number | null;
+  concerne_epci: boolean;
   modifie_par_admin: boolean;
   ajoute_par: string | null;
   updated_at: string;

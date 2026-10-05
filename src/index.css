@@ -422,3 +422,8 @@ ol.odj { margin: 0; padding-left: 22px; display: flex; flex-direction: column; g
 .src-retirer { flex: none; border: 0; background: none; color: var(--muted); font-size: 14px; padding: 2px 4px; cursor: pointer; }
 .src-retirer:hover { color: var(--rouge); }
 .src-ajout { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--bord); }
+
+/* Évolutions qui ne visent qu'un autre partenaire : grisées (rapport direction et fiche projet). */
+.autre-partenaire { opacity: .5; }
+.feuille li.autre-partenaire { color: #7a869a; }
+.evo-epci { display: flex; gap: 8px; align-items: center; font-size: 13px; margin: 8px 0; }
