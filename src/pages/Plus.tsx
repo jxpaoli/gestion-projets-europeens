@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
+import { useDonnees } from "../donnees";
 
 // Menu « Plus » du téléphone : les écrans de consultation moins fréquents.
 export default function Plus() {
+  const { estAdmin } = useDonnees();
   const liens = [
+    ...(estAdmin ? [{ to: "/suivi", icone: "📌", titre: "Mon suivi", sous: "CSE, CSSCT, NAO, port, rendez-vous : hors projets, visible par toi seul" }] : []),
     { to: "/finances", icone: "💶", titre: "Finances", sous: "Prévu, déclaré, certifié, payé par période" },
     { to: "/livrables", icone: "📦", titre: "Livrables", sous: "État et échéances des livrables" },
     { to: "/projets", icone: "🪪", titre: "Projets", sous: "Ouvrir un projet : actions, réunions, livrables, finances, docs" },

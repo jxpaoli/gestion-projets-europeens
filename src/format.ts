@@ -1,4 +1,16 @@
-import type { Priorite, StatutAction, StatutEcheance, StatutLivrable, TypeEcheance } from "./types";
+import type { DomaineSuivi, Priorite, StatutAction, StatutEcheance, StatutLivrable, TypeEcheance, TypeSuivi } from "./types";
+
+export const LIB_TYPE_SUIVI: Record<TypeSuivi, string> = {
+  reunion: "Réunion", convocation: "Convocation", rendez_vous: "Rendez-vous", action: "Action", echeance: "Échéance", info: "Info",
+};
+export const LIB_DOMAINE_SUIVI: Record<DomaineSuivi, string> = {
+  cse: "CSE", cse_central: "CSE Central", cssct: "CSSCT", nao: "NAO", rh: "RH", port_qse: "Port / QSE", epci: "EPCI de Corse", perso: "Perso", autre: "Autre",
+};
+// « 10:00:00 » et « 12:15:00 » → « 10h00 – 12h15 ».
+export function horaire(debut: string | null, fin: string | null): string {
+  const h = (t: string | null) => (t ? t.slice(0, 5).replace(":", "h") : "");
+  return [h(debut), h(fin)].filter(Boolean).join(" – ");
+}
 
 // Dates stockées en AAAA-MM-JJ ; affichées en JJ/MM/AAAA.
 export function aujourdhui(): string {

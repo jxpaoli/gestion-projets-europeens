@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { useDonnees } from "../donnees";
-import { ajouterJours, aujourdhui, date, LIB_STATUT_ACTION, LIB_STATUT_LIVRABLE, LIB_TYPE_ECHEANCE } from "../format";
+import { ajouterJours, aujourdhui, date, horaire, LIB_DOMAINE_SUIVI, LIB_STATUT_ACTION, LIB_STATUT_LIVRABLE, LIB_TYPE_ECHEANCE, LIB_TYPE_SUIVI } from "../format";
+import { Link } from "react-router-dom";
+import { quandSuivi } from "./MonSuivi";
 import { BadgesTicket, BlocDate, CaseFait, ChoixHorizon, FiltreProjets, HORIZONS, LienDoc, PastilleProjet } from "../composants";
 import { MON_NOM, usePreference } from "../preferences";
 import { Anneau } from "../indicateurs";
@@ -10,13 +12,15 @@ import type { Action, CibleSource } from "../types";
 interface Ligne {
   cle: string;
   date: string;
-  projetId: string;
+  projetId: string | null;
   genre: string;
   libelle: string;
   detail: string;
   lien: string | null;
   action?: Action;
-  cible: CibleSource;
+  // Élément de « Mon suivi » (hors projets) : badge de domaine, pas de sources.
+  domaine?: string;
+  cible?: CibleSource;
 }
 
 const ouverte = (s: string) => s === "a_faire" || s === "en_cours";
@@ -55,10 +59,19 @@ export default function Agenda({ sansIndicateurs = false }: { sansIndicateurs?: 
       tout.push({ cle: `l${v.id}`, date: v.echeance, projetId: v.projet_id, genre: "Livrable", libelle: [v.code, v.titre].filter(Boolean).join(" – "), detail: [moi ? null : v.responsable, LIB_STATUT_LIVRABLE[v.statut]].filter(Boolean).join(" · "), lien: v.lien,
         cible: { champ: "livrable_id", id: v.id, titre: [v.code, v.titre].filter(Boolean).join(" – "), projetId: v.projet_id } });
     }
+    // « Mon suivi » (admin seulement : la liste est vide pour un lecteur), quand aucun projet n'est filtré.
+    if (!filtre) {
+      for (const s of donnees.suivi) {
+        const quand = quandSuivi(s);
+        if (s.statut !== "a_faire" || !quand) continue;
+        tout.push({ cle: `s${s.id}`, date: quand, projetId: null, genre: LIB_TYPE_SUIVI[s.type], libelle: s.libelle, domaine: LIB_DOMAINE_SUIVI[s.domaine],
+          detail: [horaire(s.heure_debut, s.heure_fin), s.lieu].filter(Boolean).join(" · "), lien: s.lien });
+      }
+    }
     tout.sort((x, y) => x.date.localeCompare(y.date));
     return {
       // Les échéances passées ne sont pas des retards (réunion tenue, date échue) : seuls actions et livrables le sont.
-      retards: tout.filter((l) => l.date < auj && (l.action || l.genre === "Livrable")),
+      retards: tout.filter((l) => l.date < auj && (l.action || l.genre === "Livrable" || (l.domaine && ["Action", "Échéance"].includes(l.genre)))),
       aVenir: tout.filter((l) => l.date >= auj && (fin == null || l.date <= fin)),
     };
   }, [donnees, auj, fin, filtre, moi, cocheesIci]);
@@ -81,14 +94,15 @@ export default function Agenda({ sansIndicateurs = false }: { sansIndicateurs?: 
       <div className="corps">
         {estAdmin && l.action
           ? <div className="libelle cliquable" onClick={() => setEditer(l.action!)}>{l.libelle}</div>
+          : l.domaine ? <Link to="/suivi" className="libelle" style={{ color: "inherit", textDecoration: "none" }}>{l.libelle}</Link>
           : <div className="libelle">{l.libelle}</div>}
         <div className="meta">
-          <PastilleProjet projet={projet(l.projetId)} />
+          {l.projetId ? <PastilleProjet projet={projet(l.projetId)} /> : l.domaine && <span className="badge">{l.domaine}</span>}
           <span className="badge">{l.genre}</span>
           {l.detail && <span>{l.detail}</span>}
           {l.action && <BadgesTicket a={l.action} />}
           <LienDoc href={l.lien} />
-          <BoutonSources cible={l.cible} />
+          {l.cible && <BoutonSources cible={l.cible} />}
         </div>
       </div>
     </div>

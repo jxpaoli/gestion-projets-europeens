@@ -261,3 +261,32 @@ export interface Evolution {
   ajoute_par: string | null;
   updated_at: string;
 }
+
+// « Mon suivi » (02/11/2026) : ce qui engage Joseph hors projets européens. Lu par l'admin et le secrétaire seulement.
+export type TypeSuivi = "reunion" | "convocation" | "rendez_vous" | "action" | "echeance" | "info";
+export type DomaineSuivi = "cse" | "cse_central" | "cssct" | "nao" | "rh" | "port_qse" | "epci" | "perso" | "autre";
+export type StatutSuivi = "a_faire" | "fait" | "annule";
+
+export interface SuiviPerso {
+  id: string;
+  type: TypeSuivi;
+  domaine: DomaineSuivi;
+  libelle: string;
+  date: string | null;
+  heure_debut: string | null;
+  heure_fin: string | null;
+  lieu: string | null;
+  lien: string | null;
+  action_attendue: string | null;
+  echeance: string | null;
+  statut: StatutSuivi;
+  fait_source: string | null;
+  source_date: string | null;
+  source_expediteur: string | null;
+  source_objet: string | null;
+  mail_ref: string | null;
+  notes: string | null;
+  origine: "admin" | "secretaire";
+  modifie_par_admin: boolean;
+  updated_at: string;
+}
