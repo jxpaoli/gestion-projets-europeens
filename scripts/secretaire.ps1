@@ -305,3 +305,48 @@ function Maj-Reunion {
   if (-not $corps.Count) { throw "Rien à modifier" }
   (Api PATCH "echeances?id=eq.$Id" $corps)[0]
 }
+
+# « Mon suivi » (validé par Joseph le 02/11/2026) : ce qui engage Joseph hors projets européens (CSE, CSSCT, NAO, RH,
+# port et QSE, EPCI de Corse, rencontres, démarches). Visible par Joseph seul. Jamais le contenu d'un mail : date,
+# heure, lieu, ce qu'il doit faire, et la référence du mail (expéditeur, date, objet exact).
+#   Get-Suivi [-Tous]
+#   Nouveau-Suivi -Type convocation -Domaine cse_central -Libelle "CSE Central" -Date 2026-11-06 -HeureDebut 10:00 `
+#                 -Lieu "Hôtel Consulaire, salle du Conseil" -ActionAttendue "…" -MailRef "VERSE-<unid>" `
+#                 -DateSource 2026-10-21 -Expediteur "Philippe ALBERTINI" -Objet "Convocation CSE Central"
+#   Maj-Suivi -Id <uuid> -HeureFin 12:00        (seulement ses propres éléments, jamais touchés par Joseph)
+#   Cocher-Suivi -Id <uuid> -Preuve "Mail du 05/11/2026, X : pièces reçues"
+function Get-Suivi([switch]$Tous) {
+  $f = "suivi_perso?select=id,type,domaine,libelle,date,heure_debut,lieu,echeance,statut,origine,modifie_par_admin,mail_ref&order=date.nullslast"
+  if (-not $Tous) { $f += "&statut=eq.a_faire" }
+  Api GET $f
+}
+
+function Nouveau-Suivi {
+  param([Parameter(Mandatory)][ValidateSet('reunion', 'convocation', 'rendez_vous', 'action', 'echeance', 'info')][string]$Type,
+        [Parameter(Mandatory)][ValidateSet('cse', 'cse_central', 'cssct', 'nao', 'rh', 'port_qse', 'epci', 'perso', 'autre')][string]$Domaine,
+        [Parameter(Mandatory)][string]$Libelle, [Parameter(Mandatory)][string]$MailRef, [Parameter(Mandatory)][string]$DateSource,
+        [Parameter(Mandatory)][string]$Expediteur, [Parameter(Mandatory)][string]$Objet,
+        [string]$Date, [string]$HeureDebut, [string]$HeureFin, [string]$Lieu, [string]$Lien, [string]$ActionAttendue, [string]$Echeance)
+  $deja = Api GET "suivi_perso?select=id,libelle&mail_ref=eq.$([uri]::EscapeDataString($MailRef))&type=eq.$Type"
+  if ($deja) { Write-Host "Déjà dans Mon suivi : $($deja[0].libelle)"; return $deja[0] }
+  $corps = @{ type = $Type; domaine = $Domaine; libelle = $Libelle; mail_ref = $MailRef
+              source_date = $DateSource.Substring(0, 10); source_expediteur = $Expediteur; source_objet = $Objet }
+  $champs = @{ Date = 'date'; HeureDebut = 'heure_debut'; HeureFin = 'heure_fin'; Lieu = 'lieu'; Lien = 'lien'; ActionAttendue = 'action_attendue'; Echeance = 'echeance' }
+  foreach ($k in $champs.Keys) { $v = Get-Variable $k -ValueOnly; if ($v) { $corps[$champs[$k]] = $v } }
+  (Api POST "suivi_perso" $corps)[0]
+}
+
+function Maj-Suivi {
+  param([Parameter(Mandatory)][string]$Id, [string]$Libelle, [string]$Date, [string]$HeureDebut, [string]$HeureFin,
+        [string]$Lieu, [string]$Lien, [string]$ActionAttendue, [string]$Echeance)
+  $corps = @{}
+  $champs = @{ Libelle = 'libelle'; Date = 'date'; HeureDebut = 'heure_debut'; HeureFin = 'heure_fin'; Lieu = 'lieu'; Lien = 'lien'
+               ActionAttendue = 'action_attendue'; Echeance = 'echeance' }
+  foreach ($k in $champs.Keys) { $v = Get-Variable $k -ValueOnly; if ($v) { $corps[$champs[$k]] = $v } }
+  if (-not $corps.Count) { throw "Rien à modifier" }
+  (Api PATCH "suivi_perso?id=eq.$Id" $corps)[0]
+}
+
+function Cocher-Suivi([Parameter(Mandatory)][string]$Id, [Parameter(Mandatory)][string]$Preuve) {
+  (Api PATCH "suivi_perso?id=eq.$Id" @{ statut = 'fait'; fait_source = $Preuve })[0]
+}

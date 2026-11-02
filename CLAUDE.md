@@ -47,6 +47,12 @@ le 25/09/2026 : code, schéma, Edge Function, Worker).
   `Maj-Evolution`) ; lu par tous. Retards de livrables détectés automatiquement (période du formulaire comparée au
   livrable suivi, fin de période = `periodes.date_fin` ou début du projet + 6 mois × n), sans enregistrement.
 
+- « Mon suivi » (`gestion_projets.suivi_perso`, 02/11/2026) : ce qui engage Joseph hors projets européens (CSE,
+  CSE Central, CSSCT, NAO, RH, port/QSE, EPCI, perso). **Lu et écrit par l'admin et le secrétaire seulement, jamais
+  par un lecteur** (pas de `est_membre`). Date, heure, lieu, action attendue et référence du mail, jamais le contenu.
+  Secrétaire : `Nouveau-Suivi`, `Maj-Suivi`, `Cocher-Suivi` (preuve obligatoire), pas d'annulation ni de suppression.
+  Écran `/suivi` (admin) et éléments mélangés à l'Agenda de l'admin. Test : `supabase/tests/suivi_perso.sql`.
+
 ## Scripts (PowerShell 5.1 : enregistrer en UTF-8 **avec BOM**)
 - `scripts/sql.ps1 -File x.sql | -Query "…" [-ReadOnly]` : SQL via l'API Management (jeton admin).
 - `scripts/indexer-documents.ps1` : réindexe les documents OneDrive.
