@@ -1,8 +1,42 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { useDonnees } from "./donnees";
 import { dateRealisation } from "./indicateurs";
 import { date, jourMois } from "./format";
 import type { Action, Evenement, Projet } from "./types";
+
+// Bandeau du bas d'écran : un avis (erreur, « terminée », « supprimée »…) avec « Annuler » quand c'est possible.
+export function Bandeau() {
+  const { avis, fermerAvis } = useDonnees();
+  if (!avis) return null;
+  return (
+    <div className="bandeau" role="status" aria-live="polite">
+      <span className="bandeau-texte">{avis.texte}</span>
+      {avis.annuler && (
+        <button type="button" className="bandeau-action" onClick={() => { avis.annuler?.(); fermerAvis(); }}>Annuler</button>
+      )}
+      <button type="button" className="bandeau-fermer" aria-label="Fermer le message" onClick={fermerAvis}>×</button>
+    </div>
+  );
+}
+
+// Action destructive en deux temps, sans fenêtre native : le premier clic arme le bouton, le second exécute.
+// Le bouton se désarme seul au bout de 4 secondes.
+export function BoutonConfirmer({ onConfirmer, children, confirmation = "Confirmer ?", className = "btn danger", style, disabled = false }: {
+  onConfirmer: () => void; children: ReactNode; confirmation?: string; className?: string; style?: CSSProperties; disabled?: boolean;
+}) {
+  const [arme, setArme] = useState(false);
+  useEffect(() => {
+    if (!arme) return;
+    const minuterie = window.setTimeout(() => setArme(false), 4000);
+    return () => window.clearTimeout(minuterie);
+  }, [arme]);
+  return (
+    <button type="button" className={`${className}${arme ? " arme" : ""}`} style={style} disabled={disabled}
+      onClick={() => { if (arme) { setArme(false); onConfirmer(); } else setArme(true); }}>
+      {arme ? confirmation : children}
+    </button>
+  );
+}
 
 export function PastilleProjet({ projet }: { projet: Projet | undefined }) {
   if (!projet) return null;

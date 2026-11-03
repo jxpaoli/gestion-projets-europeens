@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useDonnees } from "./donnees";
 import { ajouterJours, aujourdhui, date } from "./format";
 import { BoutonSources } from "./Sources";
+import { BoutonConfirmer } from "./composants";
 import type { ContenuFiche, Evolution, Projet, StatutEvolution, TypeEvolution } from "./types";
 
 // Journal des évolutions d'un projet par rapport au formulaire : la fiche d'origine ne bouge pas,
@@ -147,14 +148,13 @@ export function JournalEvolutions({ projet, evolutions, retards, codes, filtre, 
   projet: Projet; evolutions: Evolution[]; retards: RetardAuto[]; codes: string[];
   filtre: string | null; setFiltre: (c: string | null) => void;
 }) {
-  const { estAdmin, supprimerEvolution } = useDonnees();
+  const { estAdmin, supprimerEvolution, notifier } = useDonnees();
   const [edition, setEdition] = useState<(Partial<Evolution> & Pick<Evolution, "projet_id" | "titre">) | null>(null);
   const liste = filtre ? evolutions.filter((e) => normCode(e.element) === normCode(filtre)) : evolutions;
   const retardsVus = filtre ? retards.filter((r) => normCode(r.code) === normCode(filtre)) : retards;
   const supprimer = async (e: Evolution) => {
-    if (!confirm(`Supprimer « ${e.titre} » du journal ?`)) return;
     const m = await supprimerEvolution(e.id);
-    if (m) alert(m);
+    notifier(m ? `Suppression impossible : ${m}` : `Évolution « ${e.titre} » supprimée`);
   };
 
   return (
@@ -208,7 +208,7 @@ export function JournalEvolutions({ projet, evolutions, retards, codes, filtre, 
                   <BoutonSources cible={{ champ: "evolution_id", id: e.id, titre: e.titre, projetId: e.projet_id }} ajout />
                   {estAdmin && <>
                     <button type="button" className="btn-lien" onClick={() => setEdition(e)}>Modifier</button>
-                    <button type="button" className="btn-lien evo-suppr" onClick={() => void supprimer(e)}>Supprimer</button>
+                    <BoutonConfirmer className="btn-lien evo-suppr" confirmation="Confirmer la suppression" onConfirmer={() => void supprimer(e)}>Supprimer</BoutonConfirmer>
                   </>}
                 </div>
               </div>

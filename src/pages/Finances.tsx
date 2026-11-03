@@ -2,6 +2,7 @@ import { useDonnees } from "../donnees";
 import { aujourdhui, date, montant, pourcent } from "../format";
 import { PastilleProjet } from "../composants";
 import { BoutonSources } from "../Sources";
+import { telechargerCsv } from "../csv";
 import type { Periode } from "../types";
 
 const somme = (ps: Periode[], k: "prevu" | "declare" | "certifie" | "paye") => {
@@ -22,9 +23,26 @@ export default function Finances({ projetId }: { projetId?: string }) {
   if (!donnees) return null;
   const auj = aujourdhui();
 
+  // Une ligne par période, pour tous les projets affichés : prévu, déclaré, certifié, payé.
+  const exporter = () => {
+    const lignes = donnees.projets
+      .filter((p) => (projetId ? p.id === projetId : p.actif))
+      .flatMap((p) => donnees.periodes.filter((x) => x.projet_id === p.id)
+        .map((x) => [p.acronyme, `P${x.numero}`, date(x.date_debut), date(x.date_fin), x.prevu, x.declare, x.certifie, x.paye, x.observations]));
+    telechargerCsv(`finances-${auj}.csv`, [
+      ["Projet", "Période", "Début", "Fin", "Prévu (€)", "Déclaré (€)", "Certifié (€)", "Payé (€)", "Observations"],
+      ...lignes,
+    ]);
+  };
+
   return (
     <>
       {!projetId && <div className="titre">Finances – part EPCI de Corse</div>}
+      {!projetId && (
+        <div className="filtres">
+          <button type="button" className="btn" onClick={exporter} title="Exporter les périodes (CSV, Excel)">⤓ Exporter (CSV)</button>
+        </div>
+      )}
       <div className="liste">
         {donnees.projets.filter((p) => (projetId ? p.id === projetId : p.actif)).map((p) => {
           const ps = donnees.periodes.filter((x) => x.projet_id === p.id);

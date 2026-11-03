@@ -1,7 +1,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useDonnees } from "./donnees";
 import { date, LIB_PRIORITE, LIB_STATUT_ACTION } from "./format";
-import { libQui } from "./composants";
+import { BoutonConfirmer, libQui } from "./composants";
 import { MON_NOM } from "./preferences";
 import { AjoutSource, ListeSources, SourcesEnAttente } from "./Sources";
 import type { Action, Evenement, NouvelleSource, Priorite, StatutAction } from "./types";
@@ -62,7 +62,7 @@ function Formulaire({ action, fermer, enregistrer, supprimer }: {
   };
 
   const effacer = async () => {
-    if (!action || !confirm("Supprimer définitivement cette action ?")) return;
+    if (!action) return;
     setOccupe(true);
     const message = await supprimer(action.id);
     setOccupe(false);
@@ -132,7 +132,8 @@ function Formulaire({ action, fermer, enregistrer, supprimer }: {
         {err && <div className="login-err">{err}</div>}
         <button type="submit" className="btn-primary" disabled={occupe}>{occupe ? "Enregistrement…" : "Enregistrer"}</button>
         {action && <Historique action={action} />}
-        {action && <button type="button" className="btn danger" style={{ width: "100%", marginTop: 16 }} onClick={effacer} disabled={occupe}>Supprimer l’action</button>}
+        {action && <BoutonConfirmer style={{ width: "100%", marginTop: 16 }} onConfirmer={() => void effacer()} disabled={occupe}
+          confirmation="Confirmer la suppression">Supprimer l’action</BoutonConfirmer>}
       </form>
     </div>
   );

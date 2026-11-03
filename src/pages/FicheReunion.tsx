@@ -7,6 +7,7 @@ import { lienFichier } from "../onedrive";
 import { documentsDeReunion, heure, lienGps } from "../reunions";
 import { useEcranLarge } from "../indicateurs";
 import { BoutonSources } from "../Sources";
+import { MON_NOM } from "../preferences";
 import type { Action, CategorieInfo, Echeance, ReunionPoint } from "../types";
 
 const CATEGORIES: { code: CategorieInfo; libelle: string; icone: string }[] = [
@@ -153,7 +154,8 @@ function ActionsReunion({ e }: { e: Echeance }) {
   const ajouter = async (ev: FormEvent) => {
     ev.preventDefault();
     if (!texte.trim()) return;
-    const m = await enregistrerAction({ projet_id: e.projet_id, libelle: texte.trim(), echeance_id: e.id, echeance: echeance || null, source: e.libelle },
+    // Créée en séance par Joseph : elle lui revient, comme dans la fiche d'action.
+    const m = await enregistrerAction({ projet_id: e.projet_id, libelle: texte.trim(), echeance_id: e.id, echeance: echeance || null, source: e.libelle, responsable: MON_NOM },
       [{ type: "reunion", reunion_id: e.id, objet: e.libelle, date_source: e.date }]);
     if (m) setErr(m); else { setTexte(""); setEcheance(""); setErr(""); }
   };
@@ -230,21 +232,56 @@ function OrdreDuJour({ points }: { points: ReunionPoint[] }) {
   );
 }
 
+// Brouillon des notes gardé sur l'appareil tant que la base ne l'a pas reçu : une coupure ou un rechargement ne perd rien.
+const cleBrouillon = (pointId: string) => `europa.brouillon.${pointId}`;
+const lireBrouillon = (pointId: string): string | null => {
+  try { return localStorage.getItem(cleBrouillon(pointId)); } catch { return null; }
+};
+const effacerBrouillon = (pointId: string, v: string) => {
+  try { if (localStorage.getItem(cleBrouillon(pointId)) === v) localStorage.removeItem(cleBrouillon(pointId)); } catch { /* rien à effacer */ }
+};
+
 function Notes({ point, lectureSeule }: { point: ReunionPoint; lectureSeule: boolean }) {
   const { majPoint } = useDonnees();
-  const [texte, setTexte] = useState(point.notes ?? "");
-  const [etat, setEtat] = useState<"" | "…" | "✓ enregistré" | "⚠ non enregistré">("");
+  // Un brouillon resté sur l'appareil (coupure pendant la frappe) remplace les notes enregistrées.
+  const [texte, setTexte] = useState(() => (lectureSeule ? point.notes ?? "" : lireBrouillon(point.id) ?? point.notes ?? ""));
+  const [etat, setEtat] = useState<"" | "…" | "✓ enregistré" | "⚠ non enregistré : copie gardée sur cet appareil">("");
   const minuterie = useRef<number | undefined>(undefined);
+  const dernier = useRef(texte);
+  const enAttente = useRef(false);
 
-  useEffect(() => () => window.clearTimeout(minuterie.current), []);
+  const enregistrer = async (v: string) => {
+    const m = await majPoint(point.id, { notes: v });
+    if (m) { setEtat("⚠ non enregistré : copie gardée sur cet appareil"); return; }
+    effacerBrouillon(point.id, v);
+    setEtat("✓ enregistré");
+  };
+
+  useEffect(() => {
+    // Brouillon restauré : on le renvoie tout de suite.
+    if (!lectureSeule && texte !== (point.notes ?? "")) {
+      setEtat("…");
+      void enregistrer(texte);
+    }
+    // Quitté avant la fin de la temporisation : on enregistre quand même le dernier texte.
+    return () => {
+      if (!enAttente.current || lectureSeule) return;
+      window.clearTimeout(minuterie.current);
+      enAttente.current = false;
+      void enregistrer(dernier.current);
+    };
+  }, []);
 
   const changer = (v: string) => {
     setTexte(v);
+    dernier.current = v;
+    enAttente.current = true;
     setEtat("…");
+    try { localStorage.setItem(cleBrouillon(point.id), v); } catch { /* sans stockage : enregistrement direct seulement */ }
     window.clearTimeout(minuterie.current);
-    minuterie.current = window.setTimeout(async () => {
-      const m = await majPoint(point.id, { notes: v });
-      setEtat(m ? "⚠ non enregistré" : "✓ enregistré");
+    minuterie.current = window.setTimeout(() => {
+      enAttente.current = false;
+      void enregistrer(v);
     }, 800);
   };
 
