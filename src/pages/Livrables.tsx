@@ -48,7 +48,7 @@ export default function Livrables({ projetId }: { projetId?: string }) {
                           const doc = documentDuLivrable(v.code, v.projet_id, donnees.documents);
                           return doc ? <LienDoc href={lienFichier(donnees.parametres.onedrive_base, doc.chemin, doc.extension)}>📎 {doc.nom}</LienDoc> : null;
                         })()}
-                        <BoutonSources ajout cible={{ champ: "livrable_id", id: v.id, titre: [v.code, v.titre].filter(Boolean).join(" – "), projetId: v.projet_id }} />
+                        <BoutonSources cible={{ champ: "livrable_id", id: v.id, titre: [v.code, v.titre].filter(Boolean).join(" – "), projetId: v.projet_id }} />
                       </div>
                     </div>
                   </div>

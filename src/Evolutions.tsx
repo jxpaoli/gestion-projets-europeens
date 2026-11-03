@@ -205,7 +205,7 @@ export function JournalEvolutions({ projet, evolutions, retards, codes, filtre, 
                     {LIB_STATUT_EVO[e.statut]}{e.statut === "integre" && e.version_integree ? ` (V${Number(e.version_integree).toFixed(1)})` : ""}
                   </span>
                   <span className="muted">{e.modifie_par_admin ? "Joseph" : "le secrétaire"}</span>
-                  <BoutonSources cible={{ champ: "evolution_id", id: e.id, titre: e.titre, projetId: e.projet_id }} ajout />
+                  <BoutonSources cible={{ champ: "evolution_id", id: e.id, titre: e.titre, projetId: e.projet_id }} />
                   {estAdmin && <>
                     <button type="button" className="btn-lien" onClick={() => setEdition(e)}>Modifier</button>
                     <BoutonConfirmer className="btn-lien evo-suppr" confirmation="Confirmer la suppression" onConfirmer={() => void supprimer(e)}>Supprimer</BoutonConfirmer>

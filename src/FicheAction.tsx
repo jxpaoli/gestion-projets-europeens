@@ -117,7 +117,7 @@ function Formulaire({ action, fermer, enregistrer, supprimer }: {
             <label htmlFor="fa-notes">Notes</label>
             <textarea id="fa-notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
 
-            <label htmlFor="fa-source">Note de source (texte libre)</label>
+            <label htmlFor="fa-source">Note libre (texte, sans date ni lien)</label>
             <input id="fa-source" value={source} onChange={(e) => setSource(e.target.value)} />
           </>
         )}

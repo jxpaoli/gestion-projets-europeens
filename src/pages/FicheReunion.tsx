@@ -48,7 +48,7 @@ export default function FicheReunion({ seance = false }: { seance?: boolean }) {
             <span className="badge">{LIB_TYPE_ECHEANCE[e.type]}</span>
             <span>{date(e.date)}{e.heure_debut ? ` · ${heure(e.heure_debut)}` : ""}{e.heure_fin ? `–${heure(e.heure_fin)}` : ""}</span>
             {e.format && <span className="badge bleu">{FORMAT[e.format]}</span>}
-            <BoutonSources ajout cible={{ champ: "echeance_id", id: e.id, titre: e.libelle, projetId: e.projet_id }} />
+            <BoutonSources cible={{ champ: "echeance_id", id: e.id, titre: e.libelle, projetId: e.projet_id }} />
           </div>
         </div>
       </div>
