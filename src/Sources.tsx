@@ -1,9 +1,10 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useDonnees } from "./donnees";
-import { aujourdhui, date } from "./format";
+import { date } from "./format";
 import { lienFichier } from "./onedrive";
 import { BoutonConfirmer } from "./composants";
+import { usePreference } from "./preferences";
 import type { CibleSource, NouvelleSource, Source, TypeSource } from "./types";
 
 // Sources d'un élément (action, écheance, livrable, période, point ou info de réunion).
@@ -11,6 +12,11 @@ import type { CibleSource, NouvelleSource, Source, TypeSource } from "./types";
 
 export const ICONE_SOURCE: Record<TypeSource, string> = { mail: "✉️", document: "📄", reunion: "🗓", autre: "🔗" };
 const LIB_TYPE: Record<TypeSource, string> = { mail: "Mail", document: "Document", reunion: "Réunion", autre: "Autre" };
+// Libellé selon le nombre : « 1 mail », « 2 mails ».
+const LIB_COMPTE: Record<TypeSource, [string, string]> = {
+  mail: ["mail", "mails"], document: ["document", "documents"], reunion: ["réunion", "réunions"], autre: ["autre", "autres"],
+};
+const compte = (t: TypeSource, n: number) => `${n} ${n > 1 ? LIB_COMPTE[t][1] : LIB_COMPTE[t][0]}`;
 
 export function useSources(cible: Pick<CibleSource, "champ" | "id">): Source[] {
   const { donnees } = useDonnees();
@@ -21,20 +27,21 @@ export function useSources(cible: Pick<CibleSource, "champ" | "id">): Source[] {
   );
 }
 
-// Petit bouton dans les listes : « ✉️ 3 📄 1 » ; ouvre le panneau des sources. Rien s'il n'y a aucune source
-// (sauf pour l'admin avec ajout=true, qui voit « + source »).
-export function BoutonSources({ cible, ajout = false }: { cible: CibleSource; ajout?: boolean }) {
+// Petit bouton dans les listes : « ✉️ 2 mails · 📄 1 document » ; ouvre le panneau des sources.
+// Sans source ni note, seul l'admin voit « + source », pour en ajouter une sans ouvrir la fiche.
+export function BoutonSources({ cible }: { cible: CibleSource }) {
   const { estAdmin, setVoirSources } = useDonnees();
   const sources = useSources(cible);
   const texte = cible.texte?.trim();
-  if (!sources.length && !texte && !(estAdmin && ajout)) return null;
-  const nb = (Object.keys(ICONE_SOURCE) as TypeSource[])
-    .map((t) => [t, sources.filter((s) => s.type === t).length] as const).filter(([, n]) => n > 0);
+  if (!sources.length && !texte && !estAdmin) return null;
+  const parType = (Object.keys(ICONE_SOURCE) as TypeSource[])
+    .map((t) => [t, sources.filter((s) => s.type === t).length] as const).filter(([, n]) => n > 0)
+    .map(([t, n]) => `${ICONE_SOURCE[t]} ${compte(t, n)}`);
+  const libelle = [...parType, ...(texte ? ["📝 note"] : [])].join(" · ") || "+ source";
   return (
     <button type="button" className="src-bouton" title="Voir les sources"
       onClick={(e) => { e.preventDefault(); e.stopPropagation(); setVoirSources(cible); }}>
-      {nb.length ? nb.map(([t, n]) => <span key={t}>{ICONE_SOURCE[t]}{n > 1 ? ` ${n}` : ""}</span>)
-        : texte ? <span>📝 source</span> : <span>+ source</span>}
+      {libelle}
     </button>
   );
 }
@@ -82,7 +89,7 @@ export function ListeSources({ cible, modifiable }: { cible: CibleSource; modifi
       {texte && (
         <div className="src-ligne">
           <span className="src-ico">📝</span>
-          <div className="src-corps"><div className="muted" style={{ fontSize: 12 }}>Note de source</div><div>{texte}</div></div>
+          <div className="src-corps"><div className="muted" style={{ fontSize: 12 }}>Note libre (texte, sans date ni lien)</div><div>{texte}</div></div>
         </div>
       )}
       {err && <div className="login-err">{err}</div>}
@@ -157,13 +164,17 @@ export function AjoutSource({ cible, projetId, onAjout }: {
 }) {
   const { donnees, ajouterSource } = useDonnees();
   const [ouvert, setOuvert] = useState(false);
-  const [type, setType] = useState<TypeSource>("mail");
-  const [jour, setJour] = useState(aujourdhui());
+  // Le type retenu reste celui de la dernière source ajoutée sur cet appareil.
+  const [type, setType] = usePreference<TypeSource>("sources.type", "mail");
+  // Pas de date par défaut : un mail ancien ne doit pas être daté d'aujourd'hui.
+  const [jour, setJour] = useState("");
   const [expediteur, setExpediteur] = useState("");
   const [objet, setObjet] = useState("");
   const [lien, setLien] = useState("");
   const [docNom, setDocNom] = useState("");
   const [reunionId, setReunionId] = useState("");
+  // Document introuvable : un second « Ajouter » l'enregistre comme simple texte.
+  const [confirmerTexte, setConfirmerTexte] = useState(false);
   const [err, setErr] = useState("");
   const [occupe, setOccupe] = useState(false);
 
@@ -175,17 +186,28 @@ export function AjoutSource({ cible, projetId, onAjout }: {
     () => (donnees?.echeances ?? []).filter((e) => !projetId || e.projet_id === projetId).slice().sort((a, b) => b.date.localeCompare(a.date)),
     [donnees, projetId],
   );
+  // Objets de mails déjà cités : proposés pour ne pas retaper un objet exact.
+  const objetsMail = useMemo(
+    () => [...new Set((donnees?.sources ?? []).filter((s) => s.type === "mail" && s.objet).map((s) => s.objet as string))],
+    [donnees],
+  );
 
-  const vider = () => { setExpediteur(""); setObjet(""); setLien(""); setDocNom(""); setReunionId(""); setErr(""); };
+  const vider = () => { setExpediteur(""); setObjet(""); setLien(""); setDocNom(""); setReunionId(""); setJour(""); setConfirmerTexte(false); setErr(""); };
 
   const valider = async () => {
     let s: NouvelleSource;
     if (type === "mail") {
+      if (!jour) { setErr("La date du mail est nécessaire."); return; }
       if (!objet.trim()) { setErr("L’objet du mail est nécessaire pour le retrouver."); return; }
-      s = { type, date_source: jour || null, expediteur: expediteur.trim() || null, objet: objet.trim() };
+      s = { type, date_source: jour, expediteur: expediteur.trim() || null, objet: objet.trim() };
     } else if (type === "document") {
       const doc = docs.find((d) => d.nom === docNom.trim());
       if (!doc && !docNom.trim()) { setErr("Choisis un document."); return; }
+      if (!doc && !confirmerTexte) {
+        setConfirmerTexte(true);
+        setErr("Aucun document ne porte ce nom. Choisis-le dans la liste, ou clique encore sur Ajouter pour l’enregistrer comme simple texte.");
+        return;
+      }
       s = { type, document_id: doc?.id ?? null, objet: doc?.nom ?? docNom.trim() };
     } else if (type === "reunion") {
       if (!reunionId) { setErr("Choisis une réunion."); return; }
@@ -216,17 +238,18 @@ export function AjoutSource({ cible, projetId, onAjout }: {
       {type === "mail" && (
         <>
           <div className="grille2">
-            <div><label htmlFor="src-jour">Date du mail</label><input id="src-jour" type="date" value={jour} onChange={(e) => setJour(e.target.value)} /></div>
+            <div><label htmlFor="src-jour">Date du mail (obligatoire)</label><input id="src-jour" type="date" value={jour} onChange={(e) => setJour(e.target.value)} /></div>
             <div><label htmlFor="src-exp">Expéditeur</label><input id="src-exp" value={expediteur} onChange={(e) => setExpediteur(e.target.value)} placeholder="Ex. M. Scarsi" /></div>
           </div>
           <label htmlFor="src-objet">Objet du mail (exact, pour le retrouver)</label>
-          <input id="src-objet" value={objet} onChange={(e) => setObjet(e.target.value)} placeholder="Ex. RE: EASY2LOG – WP3" />
+          <input id="src-objet" list="src-objets-liste" value={objet} onChange={(e) => setObjet(e.target.value)} placeholder="Ex. RE: EASY2LOG – WP3" />
+          <datalist id="src-objets-liste">{objetsMail.map((o) => <option key={o} value={o} />)}</datalist>
         </>
       )}
       {type === "document" && (
         <>
           <label htmlFor="src-doc">Document OneDrive</label>
-          <input id="src-doc" list="src-doc-liste" value={docNom} onChange={(e) => setDocNom(e.target.value)} placeholder="Tape une partie du nom…" />
+          <input id="src-doc" list="src-doc-liste" value={docNom} onChange={(e) => { setDocNom(e.target.value); setConfirmerTexte(false); }} placeholder="Tape une partie du nom…" />
           <datalist id="src-doc-liste">{docs.map((d) => <option key={d.id} value={d.nom} />)}</datalist>
         </>
       )}

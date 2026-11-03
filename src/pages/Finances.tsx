@@ -88,7 +88,7 @@ export default function Finances({ projetId }: { projetId?: string }) {
                       {ps.map((x) => (
                         <tr key={x.id} title={x.observations ?? ""}>
                           <td>P{x.numero}<div className="muted" style={{ fontSize: 11 }}>{date(x.date_debut)} → {date(x.date_fin)}</div>
-                            <BoutonSources ajout cible={{ champ: "periode_id", id: x.id, titre: `${p.acronyme} – période ${x.numero}`, projetId: p.id, texte: x.observations }} /></td>
+                            <BoutonSources cible={{ champ: "periode_id", id: x.id, titre: `${p.acronyme} – période ${x.numero}`, projetId: p.id, texte: x.observations }} /></td>
                           <td className="num">{montant(x.prevu)}</td>
                           <td className="num">{montant(x.declare)}</td>
                           <td className="num">{montant(x.certifie)}</td>
