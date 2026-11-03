@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useDonnees } from "./donnees";
 import { aujourdhui, date } from "./format";
 import { lienFichier } from "./onedrive";
+import { BoutonConfirmer } from "./composants";
 import type { CibleSource, NouvelleSource, Source, TypeSource } from "./types";
 
 // Sources d'un élément (action, écheance, livrable, période, point ou info de réunion).
@@ -64,7 +65,6 @@ export function ListeSources({ cible, modifiable }: { cible: CibleSource; modifi
   const [err, setErr] = useState("");
   const texte = cible.texte?.trim();
   const supprimer = async (s: Source) => {
-    if (!confirm("Retirer cette source ?")) return;
     setErr(await supprimerSource(s.id));
   };
   return (
@@ -72,7 +72,11 @@ export function ListeSources({ cible, modifiable }: { cible: CibleSource; modifi
       {sources.length === 0 && !texte && <div className="muted" style={{ fontSize: 13 }}>Aucune source.</div>}
       {sources.map((s) => (
         <LigneSource key={s.id} s={s}>
-          {modifiable && <button type="button" className="src-retirer" title="Retirer" aria-label="Retirer la source" onClick={() => void supprimer(s)}>✕</button>}
+          {modifiable && (
+            <BoutonConfirmer className="src-retirer" confirmation="Retirer ?" onConfirmer={() => void supprimer(s)}>
+              <span title="Retirer la source" aria-label="Retirer la source">✕</span>
+            </BoutonConfirmer>
+          )}
         </LigneSource>
       ))}
       {texte && (

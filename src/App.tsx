@@ -7,6 +7,8 @@ import type { Role } from "./types";
 import Icon from "./Icon";
 import FicheAction from "./FicheAction";
 import { PanneauSources } from "./Sources";
+import { Bandeau } from "./composants";
+import { dateHeure } from "./format";
 import Login from "./pages/Login";
 import Agenda from "./pages/Agenda";
 import Actions from "./pages/Actions";
@@ -24,7 +26,7 @@ import MonSuivi from "./pages/MonSuivi";
 
 function Layout({ role }: { role: Role }) {
   const { user, logout } = useAuth();
-  const { donnees, erreur, setEditer } = useDonnees();
+  const { donnees, erreur, setEditer, copieLocale } = useDonnees();
   const ecranLarge = useEcranLarge();
   const { pathname } = useLocation();
   const large = ecranLarge && (pathname === "/" || pathname.endsWith("/seance"));
@@ -38,6 +40,12 @@ function Layout({ role }: { role: Role }) {
         </div>
         <button className="header-logout" onClick={() => void logout()} title={user?.email ?? ""}>Quitter</button>
       </header>
+
+      {copieLocale && (
+        <div className="copie-locale" role="status">
+          Hors connexion : copie du {dateHeure(copieLocale)}. Les modifications ne sont pas enregistrées.
+        </div>
+      )}
 
       <main className={`app-main${large ? " large" : ""}`}>
         {erreur ? <div className="vide">Chargement impossible : {erreur}</div>
@@ -55,6 +63,7 @@ function Layout({ role }: { role: Role }) {
       )}
 
       {donnees && <PanneauSources />}
+      {donnees && <Bandeau />}
 
       {/* Téléphone : 5 onglets (Finances, Livrables, Projets dans « Plus ») ; PC : tout. */}
       <nav className="tabbar">

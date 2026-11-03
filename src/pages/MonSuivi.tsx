@@ -1,7 +1,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useDonnees } from "../donnees";
 import { aujourdhui, date, horaire, LIB_DOMAINE_SUIVI, LIB_TYPE_SUIVI } from "../format";
-import { BlocDate, CaseFait } from "../composants";
+import { BlocDate, BoutonConfirmer, CaseFait } from "../composants";
 import { usePreference } from "../preferences";
 import type { DomaineSuivi, SuiviPerso, TypeSuivi } from "../types";
 
@@ -10,7 +10,7 @@ export const quandSuivi = (s: SuiviPerso) => s.date ?? s.echeance;
 
 // « Mon suivi » : tout ce qui engage Joseph hors projets européens (CSE, CSSCT, NAO, port, rencontres…). Admin seulement.
 export default function MonSuivi() {
-  const { donnees, estAdmin, enregistrerSuivi } = useDonnees();
+  const { donnees, estAdmin, enregistrerSuivi, notifier } = useDonnees();
   const [domaine, setDomaine] = usePreference<DomaineSuivi | "">("suivi.domaine", "");
   const [editer, setEditer] = useState<SuiviPerso | "nouveau" | null>(null);
   const auj = aujourdhui();
@@ -33,7 +33,7 @@ export default function MonSuivi() {
 
   const cocher = async (s: SuiviPerso) => {
     const message = await enregistrerSuivi({ id: s.id, type: s.type, libelle: s.libelle, statut: s.statut === "fait" ? "a_faire" : "fait" });
-    if (message) alert(`Modification impossible : ${message}`);
+    if (message) notifier(`Modification impossible : ${message}`);
   };
 
   const ligne = (s: SuiviPerso, retard = false) => (
@@ -80,7 +80,7 @@ export default function MonSuivi() {
 }
 
 function FicheSuivi({ suivi, fermer }: { suivi: SuiviPerso | null; fermer: () => void }) {
-  const { enregistrerSuivi, supprimerSuivi } = useDonnees();
+  const { enregistrerSuivi, supprimerSuivi, notifier } = useDonnees();
   const [type, setType] = useState<TypeSuivi>(suivi?.type ?? "reunion");
   const [domaine, setDomaine] = useState<DomaineSuivi>(suivi?.domaine ?? "autre");
   const [libelle, setLibelle] = useState(suivi?.libelle ?? "");
@@ -111,9 +111,9 @@ function FicheSuivi({ suivi, fermer }: { suivi: SuiviPerso | null; fermer: () =>
   };
 
   const effacer = async () => {
-    if (!suivi || !confirm("Supprimer définitivement cet élément ?")) return;
+    if (!suivi) return;
     const message = await supprimerSuivi(suivi.id);
-    if (message) setErr(message); else fermer();
+    if (message) setErr(message); else { notifier(`« ${suivi.libelle} » supprimé de mon suivi`); fermer(); }
   };
 
   return (
@@ -174,7 +174,7 @@ function FicheSuivi({ suivi, fermer }: { suivi: SuiviPerso | null; fermer: () =>
 
         {err && <div className="login-err">{err}</div>}
         <button type="submit" className="btn-primary" disabled={occupe}>{occupe ? "Enregistrement…" : "Enregistrer"}</button>
-        {suivi && <button type="button" className="btn danger" style={{ width: "100%", marginTop: 16 }} onClick={() => void effacer()}>Supprimer</button>}
+        {suivi && <BoutonConfirmer style={{ width: "100%", marginTop: 16 }} confirmation="Confirmer la suppression" onConfirmer={() => void effacer()}>Supprimer</BoutonConfirmer>}
       </form>
     </div>
   );

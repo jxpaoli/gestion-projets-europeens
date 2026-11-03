@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
+import { viderCopie } from "./copie";
 
 interface AuthCtx {
   user: User | null;
@@ -17,8 +18,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    void supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
+    // getSession lit la session mémorisée : l'appli reste ouverte hors réseau (copie locale).
+    void supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
       setLoading(false);
     });
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -34,6 +36,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
   const logout = async () => {
     const { error } = await supabase.auth.signOut();
+    // La copie locale des données ne doit pas survivre à la session.
+    viderCopie();
     if (error) throw error;
   };
 

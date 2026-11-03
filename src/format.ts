@@ -31,6 +31,12 @@ export function date(iso: string | null | undefined): string {
 }
 
 const MOIS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+// « 03/11/2026 à 14:05 » : pour dater une copie hors connexion.
+export function dateHeure(iso: string): string {
+  const d = new Date(iso);
+  return `${d.toLocaleDateString("fr-FR")} à ${d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`;
+}
+
 export function jourMois(iso: string): { jour: string; mois: string } {
   const [, m, j] = iso.split("-");
   return { jour: String(Number(j)), mois: MOIS[Number(m) - 1] };
