@@ -5,6 +5,7 @@ import { useDonnees } from "../donnees";
 export default function Plus() {
   const { estAdmin } = useDonnees();
   const liens = [
+    { to: "/semaine", icone: "🗓️", titre: "Semaine", sous: "Toute la semaine en cours, de 8h à 18h" },
     ...(estAdmin ? [{ to: "/suivi", icone: "📌", titre: "Mon suivi", sous: "CSE, CSSCT, NAO, port, rendez-vous : hors projets, visible par toi seul" }] : []),
     { to: "/finances", icone: "💶", titre: "Finances", sous: "Prévu, déclaré, certifié, payé par période" },
     { to: "/livrables", icone: "📦", titre: "Livrables", sous: "État et échéances des livrables" },
