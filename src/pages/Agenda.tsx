@@ -65,7 +65,8 @@ export default function Agenda({ sansIndicateurs = false }: { sansIndicateurs?: 
         const quand = quandSuivi(s);
         if (s.statut !== "a_faire" || !quand) continue;
         tout.push({ cle: `s${s.id}`, date: quand, projetId: null, genre: LIB_TYPE_SUIVI[s.type], libelle: s.libelle, domaine: LIB_DOMAINE_SUIVI[s.domaine],
-          detail: [horaire(s.heure_debut, s.heure_fin), s.lieu].filter(Boolean).join(" · "), lien: s.lien });
+          detail: [horaire(s.heure_debut, s.heure_fin), s.lieu].filter(Boolean).join(" · "), lien: s.lien,
+          cible: { champ: "suivi_id", id: s.id, titre: s.libelle, projetId: null } });
       }
     }
     tout.sort((x, y) => x.date.localeCompare(y.date));

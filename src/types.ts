@@ -161,7 +161,7 @@ export interface Periode {
 export type TypeSource = "mail" | "document" | "reunion" | "autre";
 
 // Élément auquel une source est rattachée (une seule de ces colonnes est remplie).
-export type ChampCible = "action_id" | "echeance_id" | "livrable_id" | "periode_id" | "point_id" | "info_id" | "evolution_id";
+export type ChampCible = "action_id" | "echeance_id" | "livrable_id" | "periode_id" | "point_id" | "info_id" | "evolution_id" | "suivi_id";
 
 export interface Source {
   id: string;
@@ -172,6 +172,7 @@ export interface Source {
   point_id: string | null;
   info_id: string | null;
   evolution_id: string | null;
+  suivi_id: string | null;
   type: TypeSource;
   date_source: string | null;
   expediteur: string | null;
