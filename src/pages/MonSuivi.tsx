@@ -2,6 +2,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { useDonnees } from "../donnees";
 import { aujourdhui, date, horaire, LIB_DOMAINE_SUIVI, LIB_TYPE_SUIVI } from "../format";
 import { BlocDate, BoutonConfirmer, CaseFait } from "../composants";
+import { AjoutSource, BoutonSources, ListeSources } from "../Sources";
 import { usePreference } from "../preferences";
 import type { DomaineSuivi, SuiviPerso, TypeSuivi } from "../types";
 
@@ -50,6 +51,7 @@ export default function MonSuivi() {
           {s.lieu && <span>{s.lieu}</span>}
           {s.lien && <a className="doc" href={s.lien} target="_blank" rel="noreferrer">Lien</a>}
           {s.origine === "secretaire" && !s.modifie_par_admin && <span className="badge">secrétaire</span>}
+          <BoutonSources cible={{ champ: "suivi_id", id: s.id, titre: s.libelle, projetId: null }} />
         </div>
         {s.action_attendue && <div className="meta">À faire : {s.action_attendue}{s.echeance && s.date ? ` (avant le ${date(s.echeance)})` : ""}</div>}
       </div>
@@ -165,12 +167,13 @@ function FicheSuivi({ suivi, fermer }: { suivi: SuiviPerso | null; fermer: () =>
         <label htmlFor="sp-notes">Notes</label>
         <textarea id="sp-notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
 
-        {suivi?.source_objet && (
-          <div className="muted" style={{ fontSize: 13, marginTop: 10 }}>
-            Mail : {suivi.source_expediteur} · {date(suivi.source_date)} · « {suivi.source_objet} »
-            {suivi.fait_source && <><br />Fait : {suivi.fait_source}</>}
-          </div>
-        )}
+        <label>Sources</label>
+        {suivi
+          ? <><ListeSources cible={{ champ: "suivi_id", id: suivi.id, titre: suivi.libelle, projetId: null }} modifiable />
+              <AjoutSource cible={{ champ: "suivi_id", id: suivi.id }} projetId={null} /></>
+          : <div className="muted" style={{ fontSize: 13 }}>Les sources s’ajoutent une fois l’élément enregistré.</div>}
+
+        {suivi?.fait_source && <div className="muted" style={{ fontSize: 13, marginTop: 10 }}>Fait : {suivi.fait_source}</div>}
 
         {err && <div className="login-err">{err}</div>}
         <button type="submit" className="btn-primary" disabled={occupe}>{occupe ? "Enregistrement…" : "Enregistrer"}</button>
