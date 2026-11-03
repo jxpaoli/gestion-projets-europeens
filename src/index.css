@@ -443,3 +443,25 @@ ol.odj { margin: 0; padding-left: 22px; display: flex; flex-direction: column; g
 .autre-partenaire { opacity: .5; }
 .feuille li.autre-partenaire { color: #7a869a; }
 .evo-epci { display: flex; gap: 8px; align-items: center; font-size: 13px; margin: 8px 0; }
+
+/* Semaine : grille 8h–18h, cases hors plage au-dessus et au-dessous */
+.semaine-nav { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.semaine-scroll { overflow-x: auto; margin: 0 -16px; padding: 0 16px 8px; }
+.semaine-grille { display: grid; grid-template-columns: 44px repeat(7, minmax(108px, 1fr)); min-width: 820px; gap: 4px; }
+.semaine-coin { }
+.semaine-entete { font-size: 13px; text-align: center; padding: 6px 2px; border-radius: 10px; background: var(--card); border: 1px solid var(--bord); }
+.semaine-entete.auj { border-color: var(--accent); color: var(--accent); }
+.semaine-ligne-lib { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; align-self: center; text-align: right; padding-right: 4px; }
+.semaine-journee, .semaine-deborde { display: flex; flex-direction: column; gap: 4px; min-height: 30px; max-height: 120px; overflow-y: auto; }
+.semaine-deborde { background: var(--gris-fond); border-radius: 8px; padding: 4px; }
+.semaine-case { display: block; font-size: 12px; background: var(--card); border: 1px solid var(--bord); border-radius: 8px; padding: 3px 6px; color: var(--txt); text-decoration: none; }
+.semaine-case.cliquable { cursor: pointer; }
+.semaine-titre { font-weight: 700; overflow-wrap: anywhere; }
+.semaine-detail { color: var(--muted); font-size: 11px; }
+.semaine-heures { position: relative; font-size: 11px; color: var(--muted); font-weight: 700; }
+.semaine-heures span { position: absolute; right: 6px; transform: translateY(-6px); }
+.semaine-colonne { position: relative; border-left: 1px solid var(--bord); background: repeating-linear-gradient(to bottom, var(--bord) 0 1px, transparent 1px 56px); border-radius: 0 0 8px 8px; }
+.semaine-bloc { position: absolute; box-sizing: border-box; background: var(--marine); color: #fff; border-radius: 8px; padding: 3px 5px; font-size: 11.5px; font-weight: 700; overflow: hidden; line-height: 1.25; }
+.semaine-bloc.suivi { background: var(--orange); }
+.semaine-bloc span { display: block; font-weight: 500; opacity: .9; font-size: 10.5px; }
+.semaine-bloc-lien { color: inherit; text-decoration: none; display: block; height: 100%; }

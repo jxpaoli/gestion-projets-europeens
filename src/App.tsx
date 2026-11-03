@@ -23,6 +23,7 @@ import FicheReunion from "./pages/FicheReunion";
 import Plus from "./pages/Plus";
 import Rapport from "./pages/Rapport";
 import MonSuivi from "./pages/MonSuivi";
+import Semaine from "./pages/Semaine";
 
 function Layout({ role }: { role: Role }) {
   const { user, logout } = useAuth();
@@ -70,13 +71,14 @@ function Layout({ role }: { role: Role }) {
         <NavLink to="/" end><Icon name="calendar" size={21} />{ecranLarge ? "Cockpit" : "Agenda"}</NavLink>
         <NavLink to="/actions"><Icon name="list" size={21} />Actions</NavLink>
         <NavLink to="/reunions"><Icon name="users" size={21} />Réunions</NavLink>
+        {ecranLarge && <NavLink to="/semaine"><Icon name="calendar" size={21} />Semaine</NavLink>}
         {ecranLarge && <NavLink to="/finances"><Icon name="euro" size={21} />Finances</NavLink>}
         {ecranLarge && <NavLink to="/livrables"><Icon name="inbox" size={21} />Livrables</NavLink>}
         {ecranLarge && role === "admin" && <NavLink to="/suivi"><Icon name="list" size={21} />Mon suivi</NavLink>}
         <NavLink to="/documents"><Icon name="folder" size={21} />Docs</NavLink>
         {ecranLarge
           ? <NavLink to="/projets"><Icon name="card" size={21} />Projets</NavLink>
-          : <NavLink to="/plus" className={({ isActive }) => (isActive || (["/finances", "/livrables", "/projets", "/suivi"].includes(pathname) || pathname.startsWith("/projets/")) ? "active" : "")}><Icon name="gear" size={21} />Plus</NavLink>}
+          : <NavLink to="/plus" className={({ isActive }) => (isActive || (["/finances", "/livrables", "/projets", "/suivi", "/semaine"].includes(pathname) || pathname.startsWith("/projets/")) ? "active" : "")}><Icon name="gear" size={21} />Plus</NavLink>}
       </nav>
     </div>
   );
@@ -114,6 +116,7 @@ function AuthedApp() {
           <Route path="reunions" element={<Reunions />} />
           <Route path="reunions/:id" element={<FicheReunion />} />
           <Route path="reunions/:id/seance" element={<FicheReunion seance />} />
+          <Route path="semaine" element={<Semaine />} />
           <Route path="plus" element={<Plus />} />
           <Route path="rapport" element={<Rapport />} />
           {role === "admin" && <Route path="suivi" element={<MonSuivi />} />}
